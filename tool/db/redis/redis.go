@@ -26,8 +26,7 @@ func Get(key string, v any) error {
 	if str != "" {
 		return redis.Nil
 	}
-	json.Unmarshal([]byte(str), v)
-	return nil
+	return json.Unmarshal([]byte(str), v)
 }
 
 func Set(key string, v any, expire time.Duration) error {
