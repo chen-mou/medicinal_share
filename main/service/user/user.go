@@ -18,6 +18,7 @@ func Register(username, password string) *entity.User {
 	err := mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 		usr = user.Create(username, password, tx)
 		user.CreateData(usr.Id, tx)
+		user.CreateRole(usr.Id, "Custom", tx)
 		return nil
 	})
 	if err != nil {

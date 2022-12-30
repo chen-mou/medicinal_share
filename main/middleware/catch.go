@@ -7,6 +7,7 @@ import (
 const (
 	NOT_FOUND int = iota
 	NO_REPETITION
+	FORBID
 	ERROR
 )
 

@@ -12,5 +12,10 @@ func main() {
 		entity.FileData{},
 		entity.File{},
 		entity.Wares{},
-		entity.WaresPhoto{})
+		entity.WaresPhoto{},
+		entity.UserRole{},
+		entity.DoctorInfo{},
+		entity.RealInfo{},
+		entity.Tag{},
+		entity.TagRelation{})
 }
