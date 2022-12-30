@@ -5,6 +5,7 @@ import (
 	"medicinal_share/main/controller/file"
 	"medicinal_share/main/controller/user"
 	"medicinal_share/main/controller/wares"
+	"medicinal_share/main/middleware"
 )
 
 type mode int
@@ -24,6 +25,9 @@ func Route(mod int) *gin.Engine {
 		gin.SetMode(gin.TestMode)
 	}
 	app = gin.Default()
+
+	app.Use(middleware.Catch)
+
 	user.Route(app)
 
 	file.Route(app)

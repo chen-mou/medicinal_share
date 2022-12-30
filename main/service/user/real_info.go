@@ -43,3 +43,7 @@ func CreateDoctorInfo(userId int64, info *entity.DoctorInfo) {
 		return nil
 	})
 }
+
+func GetDoctorInfoByUserId(userId int64) *entity.DoctorInfo {
+	return user.GetDoctorInfoById(userId)
+}

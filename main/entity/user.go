@@ -3,11 +3,12 @@ package entity
 import "gorm.io/gorm"
 
 type User struct {
-	Id       int64       `json:"id" gorm:"primaryKey"`
-	Username string      `json:"username" gorm:"uniqueIndex;not null;size:32"`
-	Password string      `json:"password" gorm:"not null;size:64"`
-	UserInfo *UserData   `json:"user_info,omitempty" gorm:"-"`
-	Role     []*UserRole `json:"role,omitempty" gorm:"-"`
+	Id         int64       `json:"id" gorm:"primaryKey"`
+	Username   string      `json:"username" gorm:"uniqueIndex;not null;size:32"`
+	Password   string      `json:"password" gorm:"not null;size:64"`
+	UserInfo   *UserData   `json:"user_info" gorm:"-"`
+	DockerInfo *DoctorInfo `json:"docker_info,omitempty" gorm:"UserId"`
+	Role       []*UserRole `json:"role" gorm:"-"`
 }
 
 type UserData struct {
@@ -36,13 +37,15 @@ type UserRole struct {
 }
 
 type DoctorInfo struct {
-	Id       int       `json:"id" gorm:"primaryKey"`
-	UserId   int64     `json:"user_id" gorm:"uniqueIndex;not null"`
-	Work     string    `json:"work" gorm:"size:64"`     //工作医院
-	Position string    `json:"position" gorm:"size:64"` //职位
-	TagsId   []int64   `json:"tags_id" gorm:"-"`
-	InfoId   *int64    `json:"infoId" gorm:"uniqueIndex;not null"`
-	Info     *RealInfo `json:"info" gorm:"foreignKey:InfoId"`
+	Id          int            `json:"id" gorm:"primaryKey"`
+	UserId      int64          `json:"user_id" gorm:"uniqueIndex;not null"`
+	Work        string         `json:"work" gorm:"size:64"`     //工作医院
+	Position    string         `json:"position" gorm:"size:64"` //职位
+	Description string         `json:"description" gorm:"type:tinytext"`
+	TagsId      []int64        `json:"tags_id" gorm:"-"`
+	Tags        []*TagRelation `json:"tags" gorm:"foreignKey:RelationId"`
+	InfoId      *int64         `json:"infoId" gorm:"uniqueIndex;not null"`
+	Info        *RealInfo      `json:"info" gorm:"foreignKey:InfoId"`
 }
 
 func (User) TableName() string {

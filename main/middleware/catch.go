@@ -16,27 +16,58 @@ type CustomErr interface {
 	GetStatus() int
 }
 
-type NoRepetition struct {
+type noRepetition struct {
 	msg    string
 	status int
 }
 
-func (NoRepetition) GetStatus() int {
+type errors struct {
+	msg string
+}
+
+type notFound struct {
+	msg string
+}
+
+func (notFound) GetStatus() int {
+	return 404
+}
+
+func (n notFound) Error() string {
+	return n.msg
+}
+
+func (noRepetition) GetStatus() int {
 	return NO_REPETITION
 }
 
-func (n NoRepetition) Error() string {
+func (n noRepetition) Error() string {
 	return n.msg
+}
+
+func (e errors) Error() string {
+	return e.msg
+}
+
+func (errors) GetStatus() int {
+	return 500
 }
 
 func NewCustomErr(typ int, msg string) CustomErr {
 	switch typ {
 	case NO_REPETITION:
-		return NoRepetition{
+		return noRepetition{
 			msg: msg,
 		}
 	case NOT_FOUND:
+		return notFound{
+			msg: msg,
+		}
+	case FORBID:
 	case ERROR:
+		return errors{
+			msg: msg,
+		}
 	}
 	return nil
 }

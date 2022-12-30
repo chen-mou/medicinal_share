@@ -3,8 +3,10 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"medicinal_share/main/entity"
+	"medicinal_share/main/middleware"
 	"medicinal_share/main/service/user"
 	"medicinal_share/tool"
+	"strconv"
 )
 
 func CreateInfo(ctx *gin.Context) {
@@ -27,4 +29,16 @@ func CreateDoctorInfo(ctx *gin.Context) {
 	})
 }
 
-func GetDoctorInfo(ctx *gin.Context) {}
+func GetDoctorInfo(ctx *gin.Context) {
+	idstr, ok := ctx.GetQuery("id")
+	if !ok {
+		panic(middleware.NewCustomErr(middleware.ERROR, "参数id不存在"))
+	}
+	id, err := strconv.ParseInt(idstr, 10, 64)
+	if err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, "参数类型有误"))
+	}
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"data": user.GetDoctorInfoByUserId(id),
+	})
+}

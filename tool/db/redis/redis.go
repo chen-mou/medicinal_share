@@ -82,7 +82,7 @@ func HSet(key string, v any, expire time.Duration) error {
 	return err
 }
 
-//SafeGet 安全的获取缓存或者数据库中的数据
+//SafeGet 安全的获取缓存或者数据库中的数据 TODO:重写这个方法
 func SafeGet(key, lockKey string, cache func() any, getter func() any) any {
 	val := cache()
 	v := reflect.ValueOf(val)
