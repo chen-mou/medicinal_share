@@ -1,7 +1,6 @@
 package user
 
 import (
-	redis2 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
 	"medicinal_share/tool/db/mysql"
@@ -30,18 +29,6 @@ func CreateDoctorInfo(info *entity.DoctorInfo, tx *gorm.DB) *entity.DoctorInfo {
 	return info
 }
 
-func getDoctorByIdFormCache(key string) *entity.DoctorInfo {
-	info := &entity.DoctorInfo{}
-	err := redis.Get(key, info)
-	if err != nil {
-		if err == redis2.Nil {
-			return nil
-		}
-		panic(err)
-	}
-	return info
-}
-
 func getDoctorInfoByIdFormDB(userId int64) *entity.DoctorInfo {
 	info := &entity.DoctorInfo{}
 	err := mysql.GetConnect().
@@ -61,10 +48,10 @@ func getDoctorInfoByIdFormDB(userId int64) *entity.DoctorInfo {
 func GetDoctorInfoById(userId int64) *entity.DoctorInfo {
 	id := strconv.FormatInt(userId, 10)
 	key := DoctorKey + id
-	return redis.SafeGet(key, DoctorLockKey+id, func() any {
-		return getDoctorByIdFormCache(key)
-	}, func() any {
-		return getByIdFromDB(userId)
+	lock := DoctorLockKey + id
+	c := redis.NewCache(lock, key)
+	return c.Get(&entity.DoctorInfo{}, func() any {
+		return getDoctorInfoByIdFormDB(userId)
 	}).(*entity.DoctorInfo)
 }
 

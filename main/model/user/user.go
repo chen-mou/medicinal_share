@@ -55,12 +55,12 @@ func getByIdFromCache(userId int64) *entity.User {
 
 func GetById(userId int64) *entity.User {
 	id := strconv.FormatInt(userId, 10)
-	return redis.SafeGet(userKeyPrefix+id,
-		userLockKeyPrefix+id, func() any {
-			return getByIdFromCache(userId)
-		}, func() any {
-			return getByIdFromDB(userId)
-		}).(*entity.User)
+	key := userKeyPrefix + id
+	lock := userLockKeyPrefix + id
+	c := redis.NewCache(lock, key)
+	return c.Get(&entity.User{}, func() any {
+		return getByIdFromDB(userId)
+	}).(*entity.User)
 }
 
 func Create(name, password string, tx *gorm.DB) *entity.User {

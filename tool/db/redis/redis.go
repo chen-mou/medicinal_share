@@ -81,6 +81,54 @@ func HSet(key string, v any, expire time.Duration) error {
 	return err
 }
 
+type Cache struct {
+	lock string
+	key  string
+}
+
+func NewCache(lock string, key string) *Cache {
+	return &Cache{lock: lock, key: key}
+}
+
+func (c Cache) getCache(val any) any {
+	cmd := DB.Get(context.TODO(), c.key)
+	v, err := cmd.Result()
+	if err == redis.Nil {
+		return nil
+	}
+	json.Unmarshal([]byte(v), val)
+	return val
+}
+
+//Get 安全的从数据库和缓存中拿取对象参数要是指针
+func (c Cache) Get(val any, getter func() any) any {
+	v := c.getCache(val)
+	if v == nil {
+		lock := RLock(c.lock)
+		if lock.TryLock(3 * time.Second) {
+			val = getter()
+			if val != nil {
+				jsn, _ := json.Marshal(val)
+				DB.Set(context.TODO(), c.key, string(jsn), 20*time.Minute)
+			} else {
+				DB.Set(context.TODO(), c.key, "", 5*time.Minute)
+			}
+		} else {
+			val = c.getCache(val)
+			for val == nil {
+				time.Sleep(10 * time.Millisecond)
+				val = c.getCache(val)
+			}
+		}
+	}
+	return val
+}
+
+//HGet 安全的拿取对象用HGet参数要是指针 TODO:完成这个方法
+func (c Cache) HGet(val any) any {
+	panic("方法还没完成")
+}
+
 //SafeGet 安全的获取缓存或者数据库中的数据 TODO:重写这个方法
 func SafeGet(key, lockKey string, cache func() any, getter func() any) any {
 	val := cache()
