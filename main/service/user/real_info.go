@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
 	"medicinal_share/main/middleware"
+	"medicinal_share/main/model/file"
 	"medicinal_share/main/model/tag"
 	"medicinal_share/main/model/user"
 	"medicinal_share/tool/db/mysql"
@@ -36,6 +37,11 @@ func CreateDoctorInfo(userId int64, info *entity.DoctorInfo) {
 	in := user.GetDoctorInfoById(userId)
 	if in != nil {
 		panic(middleware.NewCustomErr(middleware.NO_REPETITION, "已经认证过了"))
+	}
+	if file.GetUserFile(data.UserId,
+		"doctor_avatar",
+		info.DockerAvatar) == nil {
+		panic(middleware.NewCustomErr(middleware.NO_REPETITION, "目标图片不存在"))
 	}
 	mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 		info = user.CreateDoctorInfo(info, tx)

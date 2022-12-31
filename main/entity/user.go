@@ -8,7 +8,7 @@ type User struct {
 	Password   string      `json:"password" gorm:"not null;size:64"`
 	UserInfo   *UserData   `json:"user_info" gorm:"-"`
 	DockerInfo *DoctorInfo `json:"docker_info,omitempty" gorm:"UserId"`
-	Role       []*UserRole `json:"role" gorm:"-"`
+	Role       []*UserRole `json:"role" gorm:"foreignKey:UserId"`
 }
 
 type UserData struct {
@@ -16,10 +16,10 @@ type UserData struct {
 	Nickname   string    `json:"nickname" gorm:"index;size:64"`
 	UserId     int64     `json:"user_id" gorm:"uniqueIndex;not null"`
 	InfoId     *int64    `json:"info_id" gorm:"uniqueIndex"`
-	Avatar     int64     `json:"avatar"`
+	Avatar     int64     `json:"avatar" gorm:"default:1"`
 	HelpNum    int       `json:"help_num"`
 	IsReal     bool      `json:"is_real" gorm:"-"`
-	AvatarFile *File     `json:"avatar_file,omitempty" gorm:"-"`
+	AvatarFile *FileData `json:"avatar_file,omitempty" gorm:"foreignKey:Avatar"`
 	RealInfo   *RealInfo `json:"real_info,omitempty" gorm:"foreignKey:InfoId"`
 }
 
@@ -27,6 +27,7 @@ type UserData struct {
 type RealInfo struct {
 	Id       int64  `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name     string `json:"name" gorm:"size:16"`
+	Sex      string `json:"sex" gorm:"size:2"`
 	IDNumber string `json:"id_number"`
 }
 
@@ -37,15 +38,17 @@ type UserRole struct {
 }
 
 type DoctorInfo struct {
-	Id          int            `json:"id" gorm:"primaryKey"`
-	UserId      int64          `json:"user_id" gorm:"uniqueIndex;not null"`
-	Work        string         `json:"work" gorm:"size:64"`     //工作医院
-	Position    string         `json:"position" gorm:"size:64"` //职位
-	Description string         `json:"description" gorm:"type:tinytext"`
-	TagsId      []int64        `json:"tags_id" gorm:"-"`
-	Tags        []*TagRelation `json:"tags" gorm:"foreignKey:RelationId"`
-	InfoId      *int64         `json:"infoId" gorm:"uniqueIndex;not null"`
-	Info        *RealInfo      `json:"info" gorm:"foreignKey:InfoId"`
+	Id           int            `json:"id" gorm:"primaryKey"`
+	DockerAvatar int64          `json:"docker_avatar"`
+	UserId       int64          `json:"user_id" gorm:"uniqueIndex;not null"`
+	Work         string         `json:"work" gorm:"size:64"`     //工作医院
+	Position     string         `json:"position" gorm:"size:64"` //职位
+	Description  string         `json:"description" gorm:"type:tinytext"`
+	TagsId       []int64        `json:"tags_id" gorm:"-"`
+	Tags         []*TagRelation `json:"tags" gorm:"foreignKey:RelationId"`
+	InfoId       *int64         `json:"infoId" gorm:"uniqueIndex;not null"`
+	Info         *RealInfo      `json:"info" gorm:"foreignKey:InfoId"`
+	Avatar       *FileData      `json:"avatar" gorm:"foreignKey:DockerAvatar"`
 }
 
 func (User) TableName() string {

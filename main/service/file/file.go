@@ -50,7 +50,7 @@ func Upload(f *multipart.FileHeader, typ string, uploader int64, callback func(i
 		fd.FileId = fe.Id
 		mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 			fd = file.CreateData(fd, tx)
-			callback(fe.Id, tx)
+			callback(fd.Id, tx)
 			return nil
 		})
 		return

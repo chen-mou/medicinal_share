@@ -57,3 +57,17 @@ func GetUserFileByType(userId int64, typ string) []*entity.FileData {
 	}
 	return res
 }
+
+func GetUserFile(userId int64, typ string, fileDataId int64) *entity.FileData {
+	res := &entity.FileData{}
+	err := mysql.GetConnect().Model(&entity.FileData{}).
+		Where("uploader = ? and id = ? and type = ?", userId, fileDataId, typ).
+		Joins("Avatar").First(res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
+	}
+	return res
+}

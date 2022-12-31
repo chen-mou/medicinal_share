@@ -17,5 +17,6 @@ func Route(app *gin.Engine) {
 		POST("/uploadAvatar", UploadAvatar).
 		POST("/updateInfo", UpdateInfo).
 		POST("/realName", CreateInfo).
-		POST("/dockerInfo", CreateDoctorInfo)
+		POST("/dockerInfo", CreateDoctorInfo).
+		POST("/uploadDoctorAvatar", UploadDockerAvatar)
 }

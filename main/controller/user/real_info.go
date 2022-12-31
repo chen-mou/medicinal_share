@@ -2,8 +2,10 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"medicinal_share/main/entity"
 	"medicinal_share/main/middleware"
+	"medicinal_share/main/service/file"
 	"medicinal_share/main/service/user"
 	"medicinal_share/tool"
 	"strconv"
@@ -40,5 +42,25 @@ func GetDoctorInfo(ctx *gin.Context) {
 	}
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"data": user.GetDoctorInfoByUserId(id),
+	})
+}
+
+func UploadDockerAvatar(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	f, err := ctx.FormFile("file")
+	if err != nil {
+		panic(err)
+	}
+	info := user.GetDoctorInfoByUserId(usr.Id)
+	if info == nil {
+		panic(middleware.NewCustomErr(middleware.FORBID, "错误操作"))
+	}
+	var id int64
+	file.Upload(f, "doctor_avatar", usr.Id, func(i int64, db *gorm.DB) error {
+		id = i
+		return nil
+	})
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"data": id,
 	})
 }

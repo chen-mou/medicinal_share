@@ -13,13 +13,13 @@ func UploadPhoto(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	ch := make(chan int64, 1)
+	var id int64
 	file.Upload(f, "wares", user.Id, func(i int64, db *gorm.DB) error {
-		ch <- i
+		id = i
 		return nil
 	})
 	ctx.AbortWithStatusJSON(200, gin.H{
-		"data": <-ch,
+		"data": id,
 	})
 }
 
