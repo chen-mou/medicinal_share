@@ -15,8 +15,8 @@ type Header map[string]string
 func (h Header) WriteTo(w io.Writer) (int64, error) {
 	count := int64(0)
 	for k, v := range h {
-		byt := []byte(k + ":" + v)
-		n, err := w.Write(append(byt))
+		byt := []byte(k + ":" + v + "\n")
+		n, err := w.Write(byt)
 		if err != nil {
 			return 0, err
 		}
@@ -27,10 +27,14 @@ func (h Header) WriteTo(w io.Writer) (int64, error) {
 
 func TestSendAndGet(t *testing.T) {
 	cm := NewConnManager("localhost:15889")
+	cm.HeaderHandler("Token", func(conn *Conn, s string) error {
+		conn.SetAuth(s)
+		return nil
+	})
 	cm.Run()
 	d := ws.Dialer{
 		Header: Header{
-			"test": "test",
+			"Token": "test",
 		},
 	}
 	conn, _, _, err := d.Dial(context.TODO(), "ws://localhost:15889")

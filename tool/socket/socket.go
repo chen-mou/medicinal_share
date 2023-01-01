@@ -28,7 +28,9 @@ type ConnManager struct {
 
 func NewConnManager(uri string) *ConnManager {
 	return &ConnManager{
-		uri: uri,
+		uri:           uri,
+		headerHandler: map[string]func(*Conn, string) error{},
+		handler:       map[string]func(*Conn, string){},
 	}
 }
 
@@ -99,6 +101,7 @@ func (cm ConnManager) Run() {
 			_, err = up.Upgrade(conn)
 			if err != nil {
 				SendError(conn, err)
+				return
 			}
 			ctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
 			err = p.Submit(ctx, func() {
@@ -115,6 +118,7 @@ func (cm ConnManager) Run() {
 			})
 			if err != nil {
 				SendError(conn, err)
+				return
 			}
 		}
 	}()
