@@ -15,3 +15,7 @@ func GetNowUser(ctx *gin.Context) *entity.User {
 func BytesToString(b []byte) string {
 	return *((*string)(unsafe.Pointer(&b)))
 }
+
+func StringToBytes(s string) []byte {
+	return *((*[]byte)(unsafe.Pointer(&s)))
+}
