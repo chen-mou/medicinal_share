@@ -4,7 +4,17 @@ import (
 	"flag"
 	"medicinal_share/main/resource"
 	"medicinal_share/main/route"
+	"medicinal_share/tool/socket"
 )
+
+func ws() {
+	cm := socket.NewConnManager("localhost:15889")
+
+	cm.HeaderHandler("Token", func(conn *socket.Conn, s string) error {
+		conn.SetAuth(s)
+		return nil
+	})
+}
 
 func main() {
 	var mode int
@@ -18,6 +28,8 @@ func main() {
 	app := route.Route(mode)
 
 	app.MaxMultipartMemory = 10 << 20
+
+	ws()
 
 	app.Run(":15888")
 

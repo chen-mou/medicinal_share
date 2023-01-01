@@ -33,12 +33,18 @@ func GetByName(username string) *entity.User {
 }
 
 func getByIdFromDB(userId int64) *entity.User {
-	ctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
-	res, err := dao.User.WithContext(ctx).FilterById(userId)
+	var user entity.User
+	err := mysql.GetConnect().Model(&entity.User{}).
+		Where("id = ?", userId).
+		Joins("UserInfo").Joins("Role").
+		Take(&user).Error
 	if err != nil {
-		panic(res)
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
 	}
-	return res
+	return &user
 }
 
 func getByIdFromCache(userId int64) *entity.User {

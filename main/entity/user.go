@@ -6,7 +6,7 @@ type User struct {
 	Id         int64       `json:"id" gorm:"primaryKey"`
 	Username   string      `json:"username" gorm:"uniqueIndex;not null;size:32"`
 	Password   string      `json:"password" gorm:"not null;size:64"`
-	UserInfo   *UserData   `json:"user_info" gorm:"-"`
+	UserInfo   *UserData   `json:"user_info" gorm:"foreignKey:UserId"`
 	DockerInfo *DoctorInfo `json:"docker_info,omitempty" gorm:"UserId"`
 	Role       []*UserRole `json:"role" gorm:"foreignKey:UserId"`
 }
