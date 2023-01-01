@@ -37,18 +37,30 @@ type ConnManager struct {
 
 func NewConnManager(uri string) *ConnManager {
 	return &ConnManager{
-		uri:           uri,
-		headerHandler: map[string]func(*Conn, string) error{},
-		handler:       map[string]func(*Conn, string){},
+		uri: uri,
+		headerHandler: map[string]func(*Conn, string) error{
+			"Method": func(conn *Conn, s string) error {
+				conn.method = s
+				return nil
+			},
+		},
+		handler: map[string]func(*Conn, string){},
+		cmap:    map[string]*Conn{},
 	}
 }
 
 type Conn struct {
-	conn net.Conn
-	auth string
-	info *entity.User
+	conn   net.Conn
+	auth   string
+	method string
+	info   *entity.User
 	//redisConn *redis.ClusterClient
 	Id string
+}
+
+type Message struct {
+	Method string `json:"method"`
+	Data   string `json:"data"`
 }
 
 func NewConn(conn net.Conn) *Conn {
@@ -169,8 +181,11 @@ func (cm ConnManager) run(listen net.Listener) {
 					panic(err)
 				}
 				data, err := ioutil.ReadAll(reader)
-				fmt.Println(string(data))
-				wsutil.WriteServerText(conn, []byte("receive:"))
+				fmt.Println(strconv.FormatInt(co.info.Id, 10) + ":" + string(data))
+				wsutil.WriteServerText(conn, tool.StringToBytes("receive"))
+				//res := Message{}
+				//json.Unmarshal(data, &res)
+				//cm.handler[res.Method](co, res.Data)
 			}
 		})
 		if err != nil {
@@ -195,7 +210,7 @@ func (cm ConnManager) onBeforeUpgrade(co *Conn) (ws.HandshakeHeader, error) {
 	if err != nil {
 		return nil, err
 	}
-	id := strconv.FormatInt(co.info.Id, 64)
+	id := strconv.FormatInt(co.info.Id, 10)
 	co.Id = md5.Hash(getSocketId() + id)
 	cm.cmap[co.Id] = co
 	cmd := redis1.DB.Do(context.TODO(), "set", idPrefix+id, co.Id)

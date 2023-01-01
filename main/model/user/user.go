@@ -35,8 +35,8 @@ func GetByName(username string) *entity.User {
 func getByIdFromDB(userId int64) *entity.User {
 	var user entity.User
 	err := mysql.GetConnect().Model(&entity.User{}).
-		Where("id = ?", userId).
-		Joins("UserInfo").Joins("Role").
+		Joins("UserInfo").Preload("Role").
+		Where("user.id = ?", userId).
 		Take(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

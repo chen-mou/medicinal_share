@@ -87,6 +87,8 @@ func Catch(ctx *gin.Context) {
 		case CustomErr:
 			val := err.(CustomErr)
 			ctx.AbortWithStatusJSON(val.GetStatus(), val.Error())
+		case nil:
+			return
 		default:
 			ctx.AbortWithStatusJSON(500, err)
 		}

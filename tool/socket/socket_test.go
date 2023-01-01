@@ -32,22 +32,43 @@ func TestSendAndGet(t *testing.T) {
 		return nil
 	})
 	cm.Run()
-	d := ws.Dialer{
-		Header: Header{
-			"Token": "test",
-		},
-	}
-	conn, _, _, err := d.Dial(context.TODO(), "ws://localhost:15889")
-	if err != nil {
-		panic(err)
-	}
-	for {
-		wsutil.WriteClientMessage(conn, ws.OpText, []byte("text1"))
-		msg, _, _ := wsutil.ReadServerData(conn)
-		fmt.Println(string(msg))
-		time.Sleep(2 * time.Second)
-		wsutil.WriteClientMessage(conn, ws.OpText, []byte("text2"))
-		msg, _, _ = wsutil.ReadServerData(conn)
-		fmt.Println(string(msg))
-	}
+	go func() {
+		d := ws.Dialer{
+			Header: Header{
+				"Token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJEYXRhIjp7ImlkIjoiMTQ0In0sImV4cCI6MTY3MjY2OTM3OCwiaXNzIjoiR0FURVdBWV9TRVJWRVIifQ.BZIwaUeOXDbFY7fv6mxZRDQFmJEapESuP3v6BPvg6Z0",
+			},
+		}
+		conn, _, _, err := d.Dial(context.TODO(), "ws://localhost:15889")
+		if err != nil {
+			panic(err)
+		}
+		for {
+			wsutil.WriteClientMessage(conn, ws.OpText, []byte("text1"))
+			msg, _, _ := wsutil.ReadServerData(conn)
+			fmt.Println(string(msg))
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	time.Sleep(2 * time.Second)
+
+	go func() {
+		d := ws.Dialer{
+			Header: Header{
+				"Token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJEYXRhIjp7ImlkIjoiMTYwIn0sImV4cCI6MTY3MjY3MDI2NiwiaXNzIjoiR0FURVdBWV9TRVJWRVIifQ.jySS8rj6w0yjw6m5C2c3HgJZ-etxEsuzKHpqY0uwwnc",
+			},
+		}
+		//ctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
+		conn, _, _, err := d.Dial(context.TODO(), "ws://localhost:15889")
+		if err != nil {
+			panic(err)
+		}
+		for {
+			wsutil.WriteClientMessage(conn, ws.OpText, []byte("text1"))
+			msg, _, _ := wsutil.ReadServerData(conn)
+			fmt.Println(string(msg))
+			time.Sleep(1 * time.Second)
+		}
+	}()
+	select {}
 }

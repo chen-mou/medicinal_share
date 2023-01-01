@@ -107,6 +107,7 @@ func (sole *SoleId) GetID() string {
 	sole.Lock()
 	const mod = math.MaxInt64 >> 2
 	sole.val = (sole.val + int64(sole.step)) % (mod)
+	sole.Unlock()
 	str := sole.name + strconv.FormatInt(sole.val, 10) + time.Now().String()
 	return md5.Hash(str)
 }

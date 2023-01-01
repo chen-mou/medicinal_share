@@ -37,6 +37,7 @@ func Login(username, password string) *entity.User {
 		panic(middleware.NewCustomErr(middleware.ERROR, "密码有误"))
 	}
 	usr.UserInfo = user.GetDataByUserId(usr.Id)
+	usr.Role = user.GetRolesById(usr.Id)
 	return usr
 }
 
