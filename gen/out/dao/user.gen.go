@@ -31,6 +31,64 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 	_user.Id = field.NewInt64(tableName, "id")
 	_user.Username = field.NewString(tableName, "username")
 	_user.Password = field.NewString(tableName, "password")
+	_user.UserInfo = userHasOneUserInfo{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("UserInfo", "entity.UserData"),
+		AvatarFile: struct {
+			field.RelationField
+			File struct {
+				field.RelationField
+			}
+		}{
+			RelationField: field.NewRelation("UserInfo.AvatarFile", "entity.FileData"),
+			File: struct {
+				field.RelationField
+			}{
+				RelationField: field.NewRelation("UserInfo.AvatarFile.File", "entity.File"),
+			},
+		},
+		RealInfo: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("UserInfo.RealInfo", "entity.RealInfo"),
+		},
+	}
+
+	_user.DockerInfo = userHasOneDockerInfo{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("DockerInfo", "entity.DoctorInfo"),
+		Info: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("DockerInfo.Info", "entity.RealInfo"),
+		},
+		Avatar: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("DockerInfo.Avatar", "entity.FileData"),
+		},
+		Tags: struct {
+			field.RelationField
+			Tag struct {
+				field.RelationField
+			}
+		}{
+			RelationField: field.NewRelation("DockerInfo.Tags", "entity.TagRelation"),
+			Tag: struct {
+				field.RelationField
+			}{
+				RelationField: field.NewRelation("DockerInfo.Tags.Tag", "entity.Tag"),
+			},
+		},
+	}
+
+	_user.Role = userHasManyRole{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("Role", "entity.UserRole"),
+	}
 
 	_user.fillFieldMap()
 
@@ -44,6 +102,11 @@ type user struct {
 	Id       field.Int64
 	Username field.String
 	Password field.String
+	UserInfo userHasOneUserInfo
+
+	DockerInfo userHasOneDockerInfo
+
+	Role userHasManyRole
 
 	fieldMap map[string]field.Expr
 }
@@ -85,10 +148,11 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *user) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 3)
+	u.fieldMap = make(map[string]field.Expr, 6)
 	u.fieldMap["id"] = u.Id
 	u.fieldMap["username"] = u.Username
 	u.fieldMap["password"] = u.Password
+
 }
 
 func (u user) clone(db *gorm.DB) user {
@@ -99,6 +163,227 @@ func (u user) clone(db *gorm.DB) user {
 func (u user) replaceDB(db *gorm.DB) user {
 	u.userDo.ReplaceDB(db)
 	return u
+}
+
+type userHasOneUserInfo struct {
+	db *gorm.DB
+
+	field.RelationField
+
+	AvatarFile struct {
+		field.RelationField
+		File struct {
+			field.RelationField
+		}
+	}
+	RealInfo struct {
+		field.RelationField
+	}
+}
+
+func (a userHasOneUserInfo) Where(conds ...field.Expr) *userHasOneUserInfo {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a userHasOneUserInfo) WithContext(ctx context.Context) *userHasOneUserInfo {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a userHasOneUserInfo) Model(m *entity.User) *userHasOneUserInfoTx {
+	return &userHasOneUserInfoTx{a.db.Model(m).Association(a.Name())}
+}
+
+type userHasOneUserInfoTx struct{ tx *gorm.Association }
+
+func (a userHasOneUserInfoTx) Find() (result *entity.UserData, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a userHasOneUserInfoTx) Append(values ...*entity.UserData) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a userHasOneUserInfoTx) Replace(values ...*entity.UserData) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a userHasOneUserInfoTx) Delete(values ...*entity.UserData) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a userHasOneUserInfoTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a userHasOneUserInfoTx) Count() int64 {
+	return a.tx.Count()
+}
+
+type userHasOneDockerInfo struct {
+	db *gorm.DB
+
+	field.RelationField
+
+	Info struct {
+		field.RelationField
+	}
+	Avatar struct {
+		field.RelationField
+	}
+	Tags struct {
+		field.RelationField
+		Tag struct {
+			field.RelationField
+		}
+	}
+}
+
+func (a userHasOneDockerInfo) Where(conds ...field.Expr) *userHasOneDockerInfo {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a userHasOneDockerInfo) WithContext(ctx context.Context) *userHasOneDockerInfo {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a userHasOneDockerInfo) Model(m *entity.User) *userHasOneDockerInfoTx {
+	return &userHasOneDockerInfoTx{a.db.Model(m).Association(a.Name())}
+}
+
+type userHasOneDockerInfoTx struct{ tx *gorm.Association }
+
+func (a userHasOneDockerInfoTx) Find() (result *entity.DoctorInfo, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a userHasOneDockerInfoTx) Append(values ...*entity.DoctorInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a userHasOneDockerInfoTx) Replace(values ...*entity.DoctorInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a userHasOneDockerInfoTx) Delete(values ...*entity.DoctorInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a userHasOneDockerInfoTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a userHasOneDockerInfoTx) Count() int64 {
+	return a.tx.Count()
+}
+
+type userHasManyRole struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a userHasManyRole) Where(conds ...field.Expr) *userHasManyRole {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a userHasManyRole) WithContext(ctx context.Context) *userHasManyRole {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a userHasManyRole) Model(m *entity.User) *userHasManyRoleTx {
+	return &userHasManyRoleTx{a.db.Model(m).Association(a.Name())}
+}
+
+type userHasManyRoleTx struct{ tx *gorm.Association }
+
+func (a userHasManyRoleTx) Find() (result []*entity.UserRole, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a userHasManyRoleTx) Append(values ...*entity.UserRole) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a userHasManyRoleTx) Replace(values ...*entity.UserRole) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a userHasManyRoleTx) Delete(values ...*entity.UserRole) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a userHasManyRoleTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a userHasManyRoleTx) Count() int64 {
+	return a.tx.Count()
 }
 
 type userDo struct{ gen.DO }
@@ -186,13 +471,13 @@ func (u userDo) FilterById(id int64) (result *entity.User, err error) {
 
 //GetByUserName
 //
-//select * from user where username = @username
+//select password, id from user where username = @username
 func (u userDo) GetByUserName(username string) (result *entity.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, username)
-	generateSQL.WriteString("select * from user where username = ? ")
+	generateSQL.WriteString("select password, id from user where username = ? ")
 
 	var executeSQL *gorm.DB
 

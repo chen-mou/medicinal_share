@@ -66,3 +66,11 @@ func GetInfoByNameAndIdNumber(name, idNumber string) *entity.RealInfo {
 	}
 	return info
 }
+
+func GetDoctors(page int) []*entity.DoctorInfo {
+	info := make([]*entity.DoctorInfo, 0)
+	mysql.GetConnect().Model(&entity.DoctorInfo{}).
+		Joins("Info").Preload("Tags").
+		Limit(20).Offset((page - 1) * 20).Find(&info)
+	return info
+}

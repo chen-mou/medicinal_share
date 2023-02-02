@@ -41,8 +41,9 @@ type DoctorInfo struct {
 	Id           int            `json:"id" gorm:"primaryKey"`
 	DockerAvatar int64          `json:"docker_avatar"`
 	UserId       int64          `json:"user_id" gorm:"uniqueIndex;not null"`
-	Work         string         `json:"work" gorm:"size:64"`     //工作医院
-	Position     string         `json:"position" gorm:"size:64"` //职位
+	Work         string         `json:"work" gorm:"size:64"`                  //工作医院
+	Position     string         `json:"position" gorm:"size:64"`              //职位
+	Status       string         `json:"status" gorm:"size:16;default:normal"` //医生当前状态 normal 空闲 busy 忙碌中 offline 下线
 	Description  string         `json:"description" gorm:"type:tinytext"`
 	TagsId       []int64        `json:"tags_id" gorm:"-"`
 	Tags         []*TagRelation `json:"tags" gorm:"foreignKey:RelationId"`

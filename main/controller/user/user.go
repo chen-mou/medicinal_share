@@ -21,6 +21,7 @@ func Login(ctx *gin.Context) {
 		"id": strconv.FormatInt(u.Id, 10),
 	})
 	ctx.AbortWithStatusJSON(200, gin.H{
+		"code":  0,
 		"data":  u,
 		"token": token,
 	})
@@ -34,6 +35,7 @@ func Register(ctx *gin.Context) {
 		"id": strconv.FormatInt(u.Id, 10),
 	})
 	ctx.AbortWithStatusJSON(200, gin.H{
+		"code":  0,
 		"data":  u,
 		"token": token,
 	})
@@ -43,6 +45,7 @@ func GetUserData(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
 	data := user.GetData(usr.Id)
 	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
 		"data": data,
 	})
 }
@@ -64,7 +67,7 @@ func UploadAvatar(ctx *gin.Context) {
 		return db.Model(&entity.UserData{}).Where("user_id = ?", user.Id).Update("avatar", i).Error
 	})
 	ctx.AbortWithStatusJSON(200, gin.H{
-		"data": "0",
+		"data": 0,
 	})
 }
 

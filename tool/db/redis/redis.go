@@ -15,6 +15,11 @@ func init() {
 		Addrs: []string{":6380", ":6381", ":6382", ":6480", ":6481", ":6482"},
 	})
 	DB = rdb
+	var err error
+	antiShake, err = DB.ScriptLoad(context.TODO(), AntiShakeScript).Result()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Get(key string, v any) error {
@@ -152,4 +157,20 @@ func SafeGet(key, lockKey string, cache func() any, getter func() any) any {
 		}
 	}
 	return val
+}
+
+const AntiShakeScript = `
+	if (redis.call('EXISTS', KEYS[1]) == 0) then
+		redis.call('SET', KEYS[1], 'ANTI_SHAKE')
+		redis.call('EXPIRE', KEYS[1], 60)
+		return 1;
+	end;
+	return 0;
+`
+
+var antiShake string
+
+func AntiShake(key string) bool {
+	res, _ := DB.EvalSha(context.TODO(), antiShake, []string{key}).Result()
+	return res == 1
 }

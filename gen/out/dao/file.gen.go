@@ -29,10 +29,8 @@ func newFile(db *gorm.DB, opts ...gen.DOOption) file {
 	tableName := _file.fileDo.TableName()
 	_file.ALL = field.NewAsterisk(tableName)
 	_file.Id = field.NewInt64(tableName, "id")
-	_file.Name = field.NewString(tableName, "name")
 	_file.Hash = field.NewString(tableName, "hash")
 	_file.Machine = field.NewString(tableName, "machine")
-	_file.Suffix = field.NewString(tableName, "suffix")
 	_file.Status = field.NewString(tableName, "status")
 	_file.Path = field.NewString(tableName, "path")
 	_file.Uri = field.NewString(tableName, "uri")
@@ -47,10 +45,8 @@ type file struct {
 
 	ALL     field.Asterisk
 	Id      field.Int64
-	Name    field.String
 	Hash    field.String
 	Machine field.String
-	Suffix  field.String
 	Status  field.String
 	Path    field.String
 	Uri     field.String
@@ -71,10 +67,8 @@ func (f file) As(alias string) *file {
 func (f *file) updateTableName(table string) *file {
 	f.ALL = field.NewAsterisk(table)
 	f.Id = field.NewInt64(table, "id")
-	f.Name = field.NewString(table, "name")
 	f.Hash = field.NewString(table, "hash")
 	f.Machine = field.NewString(table, "machine")
-	f.Suffix = field.NewString(table, "suffix")
 	f.Status = field.NewString(table, "status")
 	f.Path = field.NewString(table, "path")
 	f.Uri = field.NewString(table, "uri")
@@ -100,12 +94,10 @@ func (f *file) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (f *file) fillFieldMap() {
-	f.fieldMap = make(map[string]field.Expr, 8)
+	f.fieldMap = make(map[string]field.Expr, 6)
 	f.fieldMap["id"] = f.Id
-	f.fieldMap["name"] = f.Name
 	f.fieldMap["hash"] = f.Hash
 	f.fieldMap["machine"] = f.Machine
-	f.fieldMap["suffix"] = f.Suffix
 	f.fieldMap["status"] = f.Status
 	f.fieldMap["path"] = f.Path
 	f.fieldMap["uri"] = f.Uri

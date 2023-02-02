@@ -34,7 +34,22 @@ func newUserData(db *gorm.DB, opts ...gen.DOOption) userData {
 	_userData.InfoId = field.NewInt64(tableName, "info_id")
 	_userData.Avatar = field.NewInt64(tableName, "avatar")
 	_userData.HelpNum = field.NewInt(tableName, "help_num")
-	_userData.SellNum = field.NewInt(tableName, "sell_num")
+	_userData.AvatarFile = userDataBelongsToAvatarFile{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("AvatarFile", "entity.FileData"),
+		File: struct {
+			field.RelationField
+		}{
+			RelationField: field.NewRelation("AvatarFile.File", "entity.File"),
+		},
+	}
+
+	_userData.RealInfo = userDataBelongsToRealInfo{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("RealInfo", "entity.RealInfo"),
+	}
 
 	_userData.fillFieldMap()
 
@@ -44,14 +59,16 @@ func newUserData(db *gorm.DB, opts ...gen.DOOption) userData {
 type userData struct {
 	userDataDo userDataDo
 
-	ALL      field.Asterisk
-	Id       field.Int
-	Nickname field.String
-	UserId   field.Int64
-	InfoId   field.Int64
-	Avatar   field.Int64
-	HelpNum  field.Int
-	SellNum  field.Int
+	ALL        field.Asterisk
+	Id         field.Int
+	Nickname   field.String
+	UserId     field.Int64
+	InfoId     field.Int64
+	Avatar     field.Int64
+	HelpNum    field.Int
+	AvatarFile userDataBelongsToAvatarFile
+
+	RealInfo userDataBelongsToRealInfo
 
 	fieldMap map[string]field.Expr
 }
@@ -74,7 +91,6 @@ func (u *userData) updateTableName(table string) *userData {
 	u.InfoId = field.NewInt64(table, "info_id")
 	u.Avatar = field.NewInt64(table, "avatar")
 	u.HelpNum = field.NewInt(table, "help_num")
-	u.SellNum = field.NewInt(table, "sell_num")
 
 	u.fillFieldMap()
 
@@ -97,14 +113,14 @@ func (u *userData) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *userData) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 7)
+	u.fieldMap = make(map[string]field.Expr, 8)
 	u.fieldMap["id"] = u.Id
 	u.fieldMap["nickname"] = u.Nickname
 	u.fieldMap["user_id"] = u.UserId
 	u.fieldMap["info_id"] = u.InfoId
 	u.fieldMap["avatar"] = u.Avatar
 	u.fieldMap["help_num"] = u.HelpNum
-	u.fieldMap["sell_num"] = u.SellNum
+
 }
 
 func (u userData) clone(db *gorm.DB) userData {
@@ -115,6 +131,142 @@ func (u userData) clone(db *gorm.DB) userData {
 func (u userData) replaceDB(db *gorm.DB) userData {
 	u.userDataDo.ReplaceDB(db)
 	return u
+}
+
+type userDataBelongsToAvatarFile struct {
+	db *gorm.DB
+
+	field.RelationField
+
+	File struct {
+		field.RelationField
+	}
+}
+
+func (a userDataBelongsToAvatarFile) Where(conds ...field.Expr) *userDataBelongsToAvatarFile {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a userDataBelongsToAvatarFile) WithContext(ctx context.Context) *userDataBelongsToAvatarFile {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a userDataBelongsToAvatarFile) Model(m *entity.UserData) *userDataBelongsToAvatarFileTx {
+	return &userDataBelongsToAvatarFileTx{a.db.Model(m).Association(a.Name())}
+}
+
+type userDataBelongsToAvatarFileTx struct{ tx *gorm.Association }
+
+func (a userDataBelongsToAvatarFileTx) Find() (result *entity.FileData, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a userDataBelongsToAvatarFileTx) Append(values ...*entity.FileData) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a userDataBelongsToAvatarFileTx) Replace(values ...*entity.FileData) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a userDataBelongsToAvatarFileTx) Delete(values ...*entity.FileData) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a userDataBelongsToAvatarFileTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a userDataBelongsToAvatarFileTx) Count() int64 {
+	return a.tx.Count()
+}
+
+type userDataBelongsToRealInfo struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a userDataBelongsToRealInfo) Where(conds ...field.Expr) *userDataBelongsToRealInfo {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a userDataBelongsToRealInfo) WithContext(ctx context.Context) *userDataBelongsToRealInfo {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a userDataBelongsToRealInfo) Model(m *entity.UserData) *userDataBelongsToRealInfoTx {
+	return &userDataBelongsToRealInfoTx{a.db.Model(m).Association(a.Name())}
+}
+
+type userDataBelongsToRealInfoTx struct{ tx *gorm.Association }
+
+func (a userDataBelongsToRealInfoTx) Find() (result *entity.RealInfo, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a userDataBelongsToRealInfoTx) Append(values ...*entity.RealInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a userDataBelongsToRealInfoTx) Replace(values ...*entity.RealInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a userDataBelongsToRealInfoTx) Delete(values ...*entity.RealInfo) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a userDataBelongsToRealInfoTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a userDataBelongsToRealInfoTx) Count() int64 {
+	return a.tx.Count()
 }
 
 type userDataDo struct{ gen.DO }

@@ -11,11 +11,14 @@ func main() {
 		entity.UserData{},
 		entity.FileData{},
 		entity.File{},
-		entity.Wares{},
-		entity.WaresPhoto{},
+		entity.Reserve{},
+		entity.Project{},
 		entity.UserRole{},
 		entity.DoctorInfo{},
 		entity.RealInfo{},
 		entity.Tag{},
-		entity.TagRelation{})
+		entity.TagRelation{},
+		entity.Order{},
+		entity.OrderData{},
+		entity.Hospital{})
 }

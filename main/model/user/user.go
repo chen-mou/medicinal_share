@@ -29,6 +29,7 @@ func GetByName(username string) *entity.User {
 		}
 		panic(err)
 	}
+	res.Username = username
 	return res
 }
 

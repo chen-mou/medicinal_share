@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 )
 
@@ -18,4 +19,18 @@ func TestLock(t *testing.T) {
 			f(i)
 		})
 	}
+}
+
+func TestAntiShake(t *testing.T) {
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			if !AntiShake("test") {
+				fmt.Println("防抖成功")
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }

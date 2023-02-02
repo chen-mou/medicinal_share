@@ -3,6 +3,7 @@ package route
 import (
 	"github.com/gin-gonic/gin"
 	"medicinal_share/main/controller/file"
+	"medicinal_share/main/controller/order"
 	"medicinal_share/main/controller/user"
 	"medicinal_share/main/controller/wares"
 	"medicinal_share/main/middleware"
@@ -28,11 +29,23 @@ func Route(mod int) *gin.Engine {
 
 	app.Use(middleware.Catch)
 
+	app.Use(middleware.Cross)
+
+	app.OPTIONS("/*path", func(ctx *gin.Context) {
+		ctx.Header("Access-Control-Allow-Origin", "*")
+		ctx.Header("Access-Control-Allow-Origin", "*")
+		ctx.Header("Access-Control-Allow-Methods", "*")
+		ctx.Header("Access-Control-Allow-Headers", "*")
+		ctx.AbortWithStatus(200)
+	})
+
 	user.Route(app)
 
 	file.Route(app)
 
 	wares.Route(app)
+
+	order.Route(app)
 
 	return app
 }

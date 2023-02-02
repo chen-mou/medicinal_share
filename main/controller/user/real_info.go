@@ -17,7 +17,7 @@ func CreateInfo(ctx *gin.Context) {
 	ctx.BindJSON(&info)
 	user.CreateInfo(usr.Id, &info)
 	ctx.AbortWithStatusJSON(200, gin.H{
-		"data": 0,
+		"code": 0,
 	})
 }
 
@@ -27,7 +27,7 @@ func CreateDoctorInfo(ctx *gin.Context) {
 	ctx.BindJSON(info)
 	user.CreateDoctorInfo(usr.Id, &info)
 	ctx.AbortWithStatusJSON(200, gin.H{
-		"data": 0,
+		"code": 0,
 	})
 }
 
@@ -41,6 +41,7 @@ func GetDoctorInfo(ctx *gin.Context) {
 		panic(middleware.NewCustomErr(middleware.ERROR, "参数类型有误"))
 	}
 	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
 		"data": user.GetDoctorInfoByUserId(id),
 	})
 }
@@ -61,6 +62,13 @@ func UploadDockerAvatar(ctx *gin.Context) {
 		return nil
 	})
 	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
 		"data": id,
 	})
 }
+
+//func GetDoctors(ctx *gin.Context) {
+//	p := ctx.Query("page")
+//	page, _ := strconv.Atoi(p)
+//
+//}

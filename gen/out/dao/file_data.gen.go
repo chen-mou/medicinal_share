@@ -29,6 +29,8 @@ func newFileData(db *gorm.DB, opts ...gen.DOOption) fileData {
 	tableName := _fileData.fileDataDo.TableName()
 	_fileData.ALL = field.NewAsterisk(tableName)
 	_fileData.Id = field.NewInt64(tableName, "id")
+	_fileData.Name = field.NewString(tableName, "name")
+	_fileData.Suffix = field.NewString(tableName, "suffix")
 	_fileData.FileId = field.NewInt64(tableName, "file_id")
 	_fileData.Status = field.NewString(tableName, "status")
 	_fileData.Type = field.NewString(tableName, "type")
@@ -49,6 +51,8 @@ type fileData struct {
 
 	ALL      field.Asterisk
 	Id       field.Int64
+	Name     field.String
+	Suffix   field.String
 	FileId   field.Int64
 	Status   field.String
 	Type     field.String
@@ -71,6 +75,8 @@ func (f fileData) As(alias string) *fileData {
 func (f *fileData) updateTableName(table string) *fileData {
 	f.ALL = field.NewAsterisk(table)
 	f.Id = field.NewInt64(table, "id")
+	f.Name = field.NewString(table, "name")
+	f.Suffix = field.NewString(table, "suffix")
 	f.FileId = field.NewInt64(table, "file_id")
 	f.Status = field.NewString(table, "status")
 	f.Type = field.NewString(table, "type")
@@ -97,8 +103,10 @@ func (f *fileData) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (f *fileData) fillFieldMap() {
-	f.fieldMap = make(map[string]field.Expr, 6)
+	f.fieldMap = make(map[string]field.Expr, 8)
 	f.fieldMap["id"] = f.Id
+	f.fieldMap["name"] = f.Name
+	f.fieldMap["suffix"] = f.Suffix
 	f.fieldMap["file_id"] = f.FileId
 	f.fieldMap["status"] = f.Status
 	f.fieldMap["type"] = f.Type
