@@ -3,6 +3,7 @@ package mysql
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
 	"medicinal_share/gen/out/dao"
 	"sync"
@@ -45,6 +46,7 @@ func GetConnect() *gorm.DB {
 func newDb() *gorm.DB {
 	DB, err := gorm.Open(mysql.Open(dsnMaster), &gorm.Config{
 		SkipDefaultTransaction: true,
+		Logger:                 logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		panic(err)

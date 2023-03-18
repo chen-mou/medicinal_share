@@ -1,5 +1,10 @@
 package entity
 
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
+
 type File struct {
 	Id      int64  `json:"id" gorm:"primaryKey;"`
 	Hash    string `json:"hash" gorm:"unique;size:32;not null"`
@@ -26,4 +31,9 @@ func (File) TableName() string {
 
 func (FileData) TableName() string {
 	return "file_data"
+}
+
+func (FileData) AfterFind(tx *gorm.DB) error {
+	fmt.Println("fuck you")
+	return nil
 }

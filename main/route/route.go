@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"medicinal_share/main/controller/file"
 	"medicinal_share/main/controller/order"
+	"medicinal_share/main/controller/project"
 	"medicinal_share/main/controller/user"
 	"medicinal_share/main/controller/wares"
 	"medicinal_share/main/middleware"
@@ -46,6 +47,8 @@ func Route(mod int) *gin.Engine {
 	wares.Route(app)
 
 	order.Route(app)
+
+	project.Route(app)
 
 	return app
 }

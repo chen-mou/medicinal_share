@@ -3,6 +3,7 @@ package project
 import (
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
+	"medicinal_share/main/model"
 	"medicinal_share/tool/db/mysql"
 	"time"
 )
@@ -44,16 +45,22 @@ func GetHospitalByNear(g1 float64, g2 float64, last int64, rg int) []*entity.Hos
 				") as distance", g1, g2).
 			Where("id > ?", last).
 			Order("distance"),
-	).Where("distance < ?", rg).
+	).Joins("AvatarFile").
+		Where("distance < ?", rg).
 		Limit(20).
 		Find(&res).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil
-		}
-		panic(err)
-	}
-	return res
+	return model.GetErrorHandler(err, res).([]*entity.Hospital)
+}
+
+func GetProjectByHospitalId(id int64, last int64) []*entity.Project {
+	res := make([]*entity.Project, 0)
+	err := mysql.GetConnect().Table("project").
+		Where("hospital_id = ? and id > ?", id, last).
+		Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.Project)
+
 }
 
 func CreateReserve(projectId, userId int64, time time.Time) {}
+
+func UpdateReserve() {}

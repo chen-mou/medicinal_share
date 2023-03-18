@@ -21,6 +21,8 @@ func main() {
 
 	g.ApplyInterface(func(user dao.User) {}, entity.User{})
 
+	g.ApplyInterface(func(hospital dao.Hospital, hospital2 entity.Hospital) {})
+
 	g.Execute()
 
 }

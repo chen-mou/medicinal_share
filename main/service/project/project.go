@@ -8,3 +8,7 @@ import (
 func GetNearHospital(g1 float64, g2 float64, last int64, rge int) []*entity.Hospital {
 	return project.GetHospitalByNear(g1, g2, last, rge)
 }
+
+func GetProjectByHospitalId(id int64, last int64) []*entity.Project {
+	return project.GetProjectByHospitalId(id, last)
+}
