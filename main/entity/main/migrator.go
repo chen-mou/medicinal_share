@@ -2,6 +2,7 @@ package main
 
 import (
 	"medicinal_share/main/entity"
+	"medicinal_share/main/entity/report"
 	"medicinal_share/tool/db/mysql"
 )
 
@@ -20,5 +21,6 @@ func main() {
 		entity.TagRelation{},
 		entity.Order{},
 		entity.OrderData{},
-		entity.Hospital{})
+		entity.Hospital{},
+		report.Define{})
 }

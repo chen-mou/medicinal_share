@@ -40,3 +40,7 @@ func Save(index string, data any) error {
 	}
 	return err
 }
+
+func Get() error {
+	return nil
+}

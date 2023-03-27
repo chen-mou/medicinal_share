@@ -76,6 +76,7 @@ func Catch(ctx *gin.Context) {
 	defer func() {
 		err := recover()
 		switch err.(type) {
+		//处理业务异常
 		case CustomErr:
 			val := err.(CustomErr)
 			ctx.AbortWithStatusJSON(200, gin.H{
@@ -89,7 +90,6 @@ func Catch(ctx *gin.Context) {
 			ctx.AbortWithStatusJSON(500, gin.H{
 				"error_msg": err,
 			})
-			//处理业务异常
 		case nil:
 			return
 		default:
