@@ -1,6 +1,9 @@
 package report
 
-import "medicinal_share/main/entity/report/column"
+import (
+	"medicinal_share/main/entity"
+	"medicinal_share/main/entity/report/column"
+)
 
 type Define struct {
 	Id        int    `json:"id" gorm:"primaryKey;autoIncrement;"`
@@ -11,7 +14,7 @@ type Define struct {
 	Columns   []column.BaseColumn
 }
 
-//Base 报告的基本信息
+// Base 报告的基本信息
 type Base struct {
 	Id        int            `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserId    int64          `json:"user_id"`
@@ -19,4 +22,5 @@ type Base struct {
 	DefineId  int            `json:"define_id"`
 	Date      map[string]any `json:"date"`
 	Define    Define         `json:"define"`
+	CreateAt  entity.Time    `json:"create_at"`
 }

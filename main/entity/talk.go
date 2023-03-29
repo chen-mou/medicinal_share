@@ -1,7 +1,5 @@
 package entity
 
-import "time"
-
 // Room TODO:用户和医生的聊天室的实体
 type Room struct {
 	Id     int64
@@ -15,7 +13,7 @@ type MessageBase struct {
 	Main   string
 	Sender int64
 	Getter int64
-	Time   *time.Time
+	Time   Time
 }
 
 type MessageGoods struct {
