@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/elastic/go-elasticsearch/v7"
+	"math/rand"
+	"medicinal_share/tool/encrypt/md5"
 	"net/http"
+	"time"
 )
 
 var client *elasticsearch.Client
@@ -43,4 +46,13 @@ func Save(index string, data any) error {
 
 func Get() error {
 	return nil
+}
+
+func GetRandomId(name string) string {
+	now := time.Now().Format("2006-01-02 15:04:05")
+	random := make([]rune, 10)
+	for i := 0; i < 10; i++ {
+		random[i] = 'a' + rune(rand.Intn(26))
+	}
+	return md5.Hash(now + string(random) + name)
 }
