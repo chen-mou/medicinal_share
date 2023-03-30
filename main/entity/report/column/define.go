@@ -9,6 +9,7 @@ import (
 type Column interface {
 	Verify(any) error       //验证方法
 	Builder(map[string]any) //根据数据库的define构建对象
+	GetName() string        //获取当前列的名字
 }
 
 type BaseColumn struct {
@@ -16,6 +17,10 @@ type BaseColumn struct {
 	Type      string
 	Value     any `json:"value,omitempty"`
 	ValueType reflect.Kind
+}
+
+func (b BaseColumn) GetName() string {
+	return b.Name
 }
 
 func (b BaseColumn) Verify(val any) error {

@@ -7,6 +7,7 @@ import (
 	"medicinal_share/tool/db/mysql"
 )
 
+// TODO: 修改成存到elasticsearch里
 func CreateDefineTx(def *report.Define, tx *gorm.DB) error {
 	return tx.Create(def).Error
 }
