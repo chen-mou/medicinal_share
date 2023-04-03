@@ -1,14 +1,19 @@
 package report
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"medicinal_share/main/entity"
 	"medicinal_share/main/entity/report"
 	"medicinal_share/main/entity/report/column"
 	"medicinal_share/main/middleware"
 	model "medicinal_share/main/model/report"
+	"medicinal_share/tool"
+	"medicinal_share/tool/db/elasticsearch"
 	"medicinal_share/tool/encrypt/md5"
 	"reflect"
+	"time"
 )
 
 func verifyType(val any, kind reflect.Kind) error {
