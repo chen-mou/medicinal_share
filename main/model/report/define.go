@@ -67,3 +67,24 @@ func GetAllDefineIndex() []string {
 	indexs := make([]string, len(res))
 	return indexs
 }
+
+func GetAllDefineIndex() []string {
+	type index struct {
+		index string
+	}
+	client := elasticsearch.GetClient()
+	body := map[string]any{
+		"_source": []string{"indices"},
+	}
+	byt, _ := json.Marshal(body)
+	res := make([]index, 0)
+	err := elasticsearch.Get(&res, client.Search.WithRequestCache(true),
+		client.Search.WithBody(bytes.NewBuffer(byt)),
+		client.Search.WithIndex("report_define"))
+	if err != nil {
+		panic(err)
+	}
+
+	indexs := make([]string, len(res))
+	return indexs
+}

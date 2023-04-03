@@ -16,9 +16,9 @@ var client *elasticsearch.Client
 
 var config = elasticsearch.Config{
 	Addresses: []string{
-		"localhost:9300",
-		"localhost:9301",
-		"localhost:9302",
+		"http://localhost:9200",
+		"http://localhost:9201",
+		"http://localhost:9202",
 	},
 	Transport: &http.Transport{MaxIdleConns: 10},
 }

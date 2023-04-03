@@ -41,7 +41,7 @@ type DoctorInfo struct {
 	Id           int            `json:"id" gorm:"primaryKey"`
 	DockerAvatar int64          `json:"docker_avatar"`
 	UserId       int64          `json:"user_id" gorm:"uniqueIndex;not null"`
-	Work         string         `json:"work" gorm:"size:64"`                  //工作医院
+	HospitalId   int64          `json:"hospital_id" gorm:"index"`             //工作医院
 	Position     string         `json:"position" gorm:"size:64"`              //职位
 	Status       string         `json:"status" gorm:"size:16;default:normal"` //医生当前状态 normal 空闲 busy 忙碌中 offline 下线
 	Description  string         `json:"description" gorm:"type:tinytext"`
@@ -50,6 +50,7 @@ type DoctorInfo struct {
 	InfoId       *int64         `json:"infoId" gorm:"uniqueIndex;not null"`
 	Info         *RealInfo      `json:"info" gorm:"foreignKey:InfoId"`
 	Avatar       *FileData      `json:"avatar" gorm:"foreignKey:DockerAvatar"`
+	Hospital     Hospital       `json:"hospital" gorm:"foreignKey:HospitalId"`
 }
 
 func (User) TableName() string {

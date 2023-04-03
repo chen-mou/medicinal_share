@@ -118,6 +118,10 @@ func (c *Conn) Auth() error {
 	return nil
 }
 
+func (c *Conn) GetCurrentUser() *entity.User {
+	return c.info
+}
+
 type RedisMessage struct {
 	SendTo string
 	Msg    string
