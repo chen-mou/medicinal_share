@@ -11,7 +11,7 @@ type TagRelation struct {
 	RelationType string `json:"relation_type" gorm:"size:32;index:idx_type_relation"`
 	RelationId   int64  `json:"relation_id" gorm:"index:idx_type_relation"`
 	TagId        int64  `json:"tag_id" gorm:"index"`
-	Tag          Tag    `json:"tag"`
+	Tag          Tag    `json:"tag" gorm:"foreignKey:TagId"`
 }
 
 func (Tag) TableName() string {

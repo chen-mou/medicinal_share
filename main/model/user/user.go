@@ -1,11 +1,9 @@
 package user
 
 import (
-	"context"
 	"errors"
 	redis2 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
-	"medicinal_share/gen/out/dao"
 	"medicinal_share/main/entity"
 	"medicinal_share/tool"
 	"medicinal_share/tool/db/mysql"
@@ -21,8 +19,8 @@ const (
 )
 
 func GetByName(username string) *entity.User {
-	ctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
-	res, err := dao.User.WithContext(ctx).GetByUserName(username)
+	res := &entity.User{}
+	err := mysql.GetConnect().Where("username = ?", username).Take(res).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil

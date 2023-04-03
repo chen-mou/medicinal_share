@@ -5,7 +5,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/dbresolver"
-	"medicinal_share/gen/out/dao"
 	"sync"
 	"time"
 )
@@ -28,7 +27,7 @@ type CountPolicy struct {
 func init() {
 
 	db = newDb()
-	dao.SetDefault(db)
+	//dao.SetDefault(db)
 
 }
 

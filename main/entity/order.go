@@ -15,7 +15,7 @@ type OrderData struct {
 	Id        int64   `json:"id" gorm:"primaryKey"`
 	OrderId   int64   `json:"order_id"`
 	ProjectId int64   `json:"project_id"`
-	Project   Project `json:"project"`
+	Project   Project `json:"project" gorm:"foreignKey:ProjectId"`
 }
 
 func (Order) TableName() string {

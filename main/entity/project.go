@@ -8,8 +8,20 @@ type Hospital struct {
 	Latitude   float64   `json:"latitude"`
 	Distance   float64   `json:"distance" gorm:"-:migration"`
 	Avatar     int64     `json:"avatar" gorm:"not null;default:1"`
-	AvatarFile FileData  `json:"avatar_file"`
-	Projects   []Project `json:"projects,omitempty"`
+	AvatarFile FileData  `json:"avatar_file" gorm:"foreignKey:avatar"`
+	Projects   []Project `json:"projects,omitempty" gorm:"foreignKey:HospitalId"`
+}
+
+//ProjectReserve 用于展示项目可以预约的时间
+type ProjectReserve struct {
+	Id         int64      `json:"id"`
+	Num        int        `json:"num"` //人数
+	Start      Time       `json:"start"`
+	End        Time       `json:"end"`
+	ProjectId  int64      `json:"project_id"`
+	DoctorId   int64      `json:"doctor_id"` //主治医生
+	Project    Project    `json:"project" gorm:"foreignKey:"projectId"`
+	DoctorInfo DoctorInfo `json:"doctor_info" gorm:"foreignKey:DoctorId"`
 }
 
 //Project 项目介绍
@@ -22,24 +34,13 @@ type Project struct {
 	Description string  `json:"description" gorm:"type:tinytext"`
 }
 
-//ProjectReserve 用于展示项目可以预约的时间
-type ProjectReserve struct {
-	Id         int64 `json:"id"`
-	Num        int   `json:"num"` //人数
-	Start      Time  `json:"start"`
-	End        Time  `json:"end"`
-	ProjectId  int64 `json:"project_id"`
-	DoctorId   int64 `json:"doctor_id"` //主治医生
-	Project    `json:"project"`
-	DoctorInfo DoctorInfo `json:"doctor_info"`
-}
-
+//Reserve 用户预约
 type Reserve struct {
 	Id        int64          `json:"id" gorm:"primaryKey"`
 	ProjectId int64          `json:"project_id" gorm:"index"`
 	Status    string         `json:"status" gorm:"size:16;default:pending"`
 	UserId    int64          `json:"user_id" gorm:"index"`
-	Project   ProjectReserve `json:"project"`
+	Project   ProjectReserve `json:"project" gorm:"foreignKey:ProjectId"`
 }
 
 func (Hospital) TableName() string {
