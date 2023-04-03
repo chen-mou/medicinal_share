@@ -22,7 +22,7 @@ type FileData struct {
 	Status   string `json:"status" gorm:"size:16;not null"`
 	Type     string `json:"type" gorm:"size:16;index:idx_uploader_type;not null"`
 	Uploader int64  `json:"uploader" gorm:"index:idx_uploader_type;not null"`
-	File     *File  `json:"file" gorm:"foreignKey:file_id"`
+	File     *File  `json:"file"`
 }
 
 func (File) TableName() string {

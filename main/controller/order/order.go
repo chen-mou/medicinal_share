@@ -16,3 +16,6 @@ func CreateOrder(ctx *gin.Context) {
 		"code": 0,
 	})
 }
+
+//GetOrder TODO:获取用户的预定
+func GetOrder(ctx *gin.Context) {}

@@ -48,3 +48,7 @@ func GetNearHospital(ctx *gin.Context) {
 			param.Range),
 	})
 }
+
+func AddProjectReserve(ctx *gin.Context) {
+
+}
