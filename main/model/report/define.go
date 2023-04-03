@@ -27,6 +27,7 @@ func GetDefineByProjectId(projectId int64) *report.Define {
 	//	panic(err)
 	//}
 	query := map[string]any{
+		"_source": []string{"id", "project_id", "define", "name", "index"},
 		"query": map[string]any{
 			"filter": map[string]any{
 				"project_id": projectId,
@@ -37,8 +38,7 @@ func GetDefineByProjectId(projectId int64) *report.Define {
 	byt, _ := json.Marshal(query)
 	res, err := client.Search(client.Search.WithIndex("report_define"),
 		client.Search.WithBody(bytes.NewBuffer(byt)),
-		client.Search.WithSize(1),
-		client.Search.WithSource("id", "project_id", "define", "name", "index"))
+		client.Search.WithSize(1))
 	if err != nil {
 		panic(err)
 	}
@@ -48,12 +48,22 @@ func GetDefineByProjectId(projectId int64) *report.Define {
 }
 
 func GetAllDefineIndex() []string {
+	type index struct {
+		index string
+	}
 	client := elasticsearch.GetClient()
 	body := map[string]any{
 		"_source": []string{"indices"},
 	}
 	byt, _ := json.Marshal(body)
-	res, err := client.Search(client.Search.WithRequestCache(true), client.Search.WithBody(bytes.NewBuffer(byt)), client.Search.WithIndex("report_define"))
+	res := make([]index, 0)
+	err := elasticsearch.Get(&res, client.Search.WithRequestCache(true),
+		client.Search.WithBody(bytes.NewBuffer(byt)),
+		client.Search.WithIndex("report_define"))
 	if err != nil {
+		panic(err)
 	}
+
+	indexs := make([]string, len(res))
+	return indexs
 }

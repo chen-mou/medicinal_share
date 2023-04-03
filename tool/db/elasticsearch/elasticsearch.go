@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"io/ioutil"
 	"math/rand"
 	"medicinal_share/tool/encrypt/md5"
 	"net/http"
@@ -44,8 +46,16 @@ func Save(index string, data any) error {
 	return err
 }
 
-func Get() error {
-	return nil
+func Get(v any, o ...func(*esapi.SearchRequest)) error {
+	var err error
+	var res *esapi.Response
+	if res, err = client.Search(o...); err == nil {
+		var byt []byte
+		if byt, err = ioutil.ReadAll(res.Body); err == nil {
+			err = json.Unmarshal(byt, v)
+		}
+	}
+	return err
 }
 
 func GetRandomId(name string) string {
