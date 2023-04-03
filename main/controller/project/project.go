@@ -49,6 +49,7 @@ func GetNearHospital(ctx *gin.Context) {
 	})
 }
 
+//AddProjectReserve 添加可以预约的时间
 func AddProjectReserve(ctx *gin.Context) {
 
 }
