@@ -40,6 +40,10 @@ func UploadReport(projectId int64, userId int64, data map[string]any) {
 	elasticsearch.GetClient().Create("report", elasticsearch.GetRandomId("report"), bytes.NewBuffer(byt))
 }
 
-func GetReport(id string) report.Base {}
+func GetReport(id string) *report.Base {
+	return nil
+}
 
-func GetAllUserReport(userId int64) []report.Base {}
+func GetAllUserReport(userId int64) []*report.Base {
+	return nil
+}
