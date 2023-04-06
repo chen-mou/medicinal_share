@@ -1,9 +1,11 @@
 package entity
 
 type Tag struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type" gorm:"index"` //那种类型的tag 如领域，症状，病情，学位
+	Id     int64  `json:"id"`
+	Parent int64  `json:"parent"`
+	Name   string `json:"name"`
+	End    bool   `json:"end"`
+	Type   string `json:"type" gorm:"index"` //那种类型的tag 如领域，症状，病情，学位
 }
 
 type TagRelation struct {

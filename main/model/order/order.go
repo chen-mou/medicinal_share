@@ -6,21 +6,18 @@ import (
 	"medicinal_share/tool"
 )
 
-func CreateOrder(order *entity.Order, tx *gorm.DB) {
+func CreateOrder(order *entity.Order, reserveId int64, tx *gorm.DB) {
 	order.Id, _ = tool.GetId("order")
 	order.Status = "pending"
 	err := tx.Create(order).Error
 	if err != nil {
 		panic(err)
 	}
-	datas := make([]*entity.OrderData, len(order.ProjectIds))
-	for i, v := range order.ProjectIds {
-		datas[i] = &entity.OrderData{
-			OrderId:   order.Id,
-			ProjectId: v,
-		}
+	data := &entity.OrderData{
+		OrderId:   order.Id,
+		ReserveId: reserveId,
 	}
-	err = tx.Create(datas).Error
+	err = tx.Create(data).Error
 	if err != nil {
 		panic(err)
 	}

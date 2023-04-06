@@ -124,3 +124,19 @@ func UpdatePassword(userId int64, password string, tx *gorm.DB) {
 		panic(err)
 	}
 }
+
+type DoctorStatus uint
+
+const (
+	Online  = iota //在线
+	Busy           //忙碌
+	Offline        //下线
+)
+
+// UpdateDoctorStatus TODO:更新医生当前的状态
+func UpdateDoctorStatus(userId int64, status DoctorStatus) {}
+
+// GetBestDoctor 获取最佳匹配的医生
+func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
+
+}
