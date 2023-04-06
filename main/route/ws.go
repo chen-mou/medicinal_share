@@ -8,6 +8,11 @@ import (
 func Websocket() {
 	cm := socket.NewConnManager("localhost:15777")
 
+	cm.HeaderHandler("x-token", func(conn *socket.Conn, s string) error {
+		conn.SetAuth(s)
+		return nil
+	})
+
 	treat.Websocket(cm)
 
 	cm.Run()

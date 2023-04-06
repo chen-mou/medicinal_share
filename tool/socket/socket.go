@@ -112,6 +112,7 @@ func (c *Conn) Auth() error {
 	for _, v := range usr.Role {
 		if v.Name == "doctor" {
 			usr.DockerInfo = user.GetDoctorInfoById(id)
+			user.UpdateDoctorStatus(usr.Id, user.Online)
 		}
 	}
 	c.info = usr
