@@ -33,7 +33,7 @@ func Create(version string, reverseId int64, userId int64) {
 		panic(middleware.NewCustomErr(middleware.ERROR, "预约满了"))
 	}
 	mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
-		p := project.GetReserveById(reverseId, tx)
+		p := project.GetProjectReserveById(reverseId, tx)
 		ord := &entity.Order{
 			UserId: userId,
 			Price:  p.Project.Price,
@@ -44,6 +44,7 @@ func Create(version string, reverseId int64, userId int64) {
 	})
 }
 
+// Pay TODO:付款成功创建预约，付款检查redis是否存在目标订单，不存在则支付超时，存在则支付并更新数据库
 func Pay(orderId int64) {
 
 }

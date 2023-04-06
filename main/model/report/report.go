@@ -1,6 +1,8 @@
 package report
 
 import (
+	"bytes"
+	"encoding/json"
 	"medicinal_share/main/entity/report"
 	"medicinal_share/tool/db/elasticsearch"
 )
@@ -13,7 +15,7 @@ func Create(projectId int64, userId int64, data map[string]any) {
 	r.ProjectId = projectId
 	r.UserId = userId
 	r.Date = data
-	if err := elasticsearch.Save(define.Indices, r); err != nil {
+	if err := elasticsearch.Save("report-"+define.Indices, r); err != nil {
 		panic(err)
 	}
 }
@@ -22,7 +24,7 @@ func GetReport(projectId int64, userId int64) *report.Base {
 
 }
 
-func GetReportByUserId(userId int64) []*report.Base {
+func GetReportByUserId(userId int64, last int64, num int) []*report.Base {
 	queryBody := map[string]any{
 		"bool": map[string]any{
 			"filter": map[string]any{
@@ -32,6 +34,7 @@ func GetReportByUserId(userId int64) []*report.Base {
 			},
 		},
 	}
+	byt, _ := json.Marshal(queryBody)
 	client := elasticsearch.GetClient()
-	client.Search(client.Search.WithIndex(""))
+	client.Search(client.Search.WithIndex("report-*"), client.Search.WithBody(bytes.NewBuffer(byt)))
 }

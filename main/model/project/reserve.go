@@ -32,7 +32,9 @@ func LoadReserveById(reserveId int64) error {
 	return err
 }
 
-func GetReserveById(id int64, tx *gorm.DB) *entity.ProjectReserve {
+func CreateProjectReserve() {}
+
+func GetProjectReserveById(id int64, tx *gorm.DB) *entity.ProjectReserve {
 	res := &entity.ProjectReserve{}
 	err := tx.Where("id = ?", id).Association("Project").Find(res)
 	if err == gorm.ErrRecordNotFound {

@@ -135,3 +135,8 @@ const (
 
 // UpdateDoctorStatus TODO:更新医生当前的状态
 func UpdateDoctorStatus(userId int64, status DoctorStatus) {}
+
+// GetBestDoctor 获取最佳匹配的医生
+func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
+
+}
