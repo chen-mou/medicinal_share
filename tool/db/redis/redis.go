@@ -3,10 +3,19 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/go-redis/redis/v8"
 	"reflect"
+	"strconv"
 	"time"
 )
+
+type Empty struct {
+}
+
+func (Empty) Error() string {
+	return "空"
+}
 
 var DB *redis.ClusterClient
 
@@ -49,7 +58,7 @@ func HGet(key string, v any) error {
 	if err != nil {
 		return err
 	}
-	if val == -1 {
+	if val == -1 || val == -2 {
 		return redis.Nil
 	}
 	c := DB.HGetAll(context.TODO(), key)
@@ -58,7 +67,7 @@ func HGet(key string, v any) error {
 		return err
 	}
 	if len(r) == 0 {
-		return redis.Nil
+		return Empty{}
 	}
 	return c.Scan(v)
 }
@@ -80,7 +89,11 @@ func HSet(key string, v any, expire time.Duration) error {
 			}
 			DB.HSet(context.TODO(), key, name, fieldv.Interface())
 		}
-		DB.Set(context.TODO(), key+":expire", "", expire)
+		if v == nil {
+			DB.Set(context.TODO(), key+":expire", "", expire)
+		} else {
+			DB.Set(context.TODO(), key+":expire", "value", expire)
+		}
 		return nil
 	})
 	return err
@@ -95,20 +108,34 @@ func NewCache(lock string, key string) *Cache {
 	return &Cache{lock: lock, key: key}
 }
 
-func (c Cache) getCache(val any) any {
+func (c Cache) getCache(val any) (any, error) {
 	cmd := DB.Get(context.TODO(), c.key)
 	v, err := cmd.Result()
-	if err == redis.Nil {
-		return nil
+	if err != nil {
+		return nil, err
+	}
+	if v == "" {
+		return nil, nil
 	}
 	json.Unmarshal([]byte(v), val)
-	return val
+	return val, nil
 }
 
-//Get 安全的从数据库和缓存中拿取对象参数要是指针
+func (c Cache) getHCache(val any) (any, error) {
+	err := HGet(c.key, val)
+	if errors.Is(err, Empty{}) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
+}
+
+// Get 安全的从数据库和缓存中拿取对象参数要是指针
 func (c Cache) Get(val any, getter func() any) any {
-	v := c.getCache(val)
-	if v == nil {
+	_, err := c.getCache(val)
+	if err != nil && err == redis.Nil {
 		lock := RLock(c.lock)
 		if lock.TryLock(3 * time.Second) {
 			val = getter()
@@ -119,22 +146,79 @@ func (c Cache) Get(val any, getter func() any) any {
 				DB.Set(context.TODO(), c.key, "", 5*time.Minute)
 			}
 		} else {
-			val = c.getCache(val)
-			for val == nil {
+			val, err = c.getCache(val)
+			for err == redis.Nil {
 				time.Sleep(10 * time.Millisecond)
-				val = c.getCache(val)
+				val, err = c.getCache(val)
 			}
 		}
+	}
+	if err != nil {
+		panic(err)
 	}
 	return val
 }
 
-//HGet 安全的拿取对象用HGet参数要是指针 TODO:完成这个方法
-func (c Cache) HGet(val any) any {
-	panic("方法还没完成")
+// HGet 安全的拿取对象用HGet参数要是指针 TODO:完成这个方法
+func (c Cache) HGet(val any, getter func() any) any {
+	_, err := c.getHCache(val)
+	if err != nil && errors.Is(err, Empty{}) {
+		lock := RLock(c.lock)
+		if lock.TryLock(3 * time.Second) {
+			val = getter()
+			if val != nil {
+				HSet(c.key, val, 20*time.Minute)
+			} else {
+				HSet(c.key, val, 5*time.Minute)
+			}
+		} else {
+			val, err = c.getHCache(val)
+			for err == redis.Nil {
+				time.Sleep(10 * time.Millisecond)
+				val, err = c.getHCache(val)
+			}
+		}
+	}
+	if err != nil {
+		panic(err)
+	}
+	return val
 }
 
-//SafeGet 安全的获取缓存或者数据库中的数据 TODO:重写这个方法
+// LoadInt 加载一个数字到redis里
+func (c Cache) LoadInt(getter func() (int, error)) (int, error) {
+	var val int
+	var s string
+	var err error
+	s, err = DB.Get(context.TODO(), c.key).Result()
+	if err != nil && err == redis.Nil {
+		lock := RLock(c.lock)
+		if lock.TryLock(3 * time.Second) {
+			val, err = getter()
+			if err != nil {
+				DB.Set(context.TODO(), c.key, strconv.Itoa(val), 20*time.Minute)
+			} else {
+				DB.Set(context.TODO(), c.key, "", 5*time.Minute)
+			}
+		} else {
+			s, err = DB.Get(context.TODO(), c.key).Result()
+			for err == redis.Nil {
+				time.Sleep(10 * time.Millisecond)
+				s, err = DB.Get(context.TODO(), c.key).Result()
+			}
+		}
+	}
+	if err != nil {
+		panic(err)
+	}
+	if s == "" {
+		return 0, redis.Nil
+	}
+	val, _ = strconv.Atoi(s)
+	return val, nil
+}
+
+// SafeGet 安全的获取缓存或者数据库中的数据 TODO:重写这个方法
 func SafeGet(key, lockKey string, cache func() any, getter func() any) any {
 	val := cache()
 	v := reflect.ValueOf(val)
