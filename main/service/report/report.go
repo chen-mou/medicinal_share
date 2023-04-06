@@ -1,7 +1,6 @@
 package report
 
 import (
-	"bytes"
 	"encoding/json"
 	"medicinal_share/main/entity"
 	"medicinal_share/main/entity/report"
@@ -9,7 +8,6 @@ import (
 	"medicinal_share/main/middleware"
 	model "medicinal_share/main/model/report"
 	"medicinal_share/tool"
-	"medicinal_share/tool/db/elasticsearch"
 	"time"
 )
 
@@ -36,8 +34,7 @@ func UploadReport(projectId int64, userId int64, data map[string]any) {
 		ProjectId: projectId,
 		UserId:    userId,
 	}
-	byt, _ := json.Marshal(report)
-	elasticsearch.GetClient().Create("report", elasticsearch.GetRandomId("report"), bytes.NewBuffer(byt))
+	model.SaveReport(report)
 }
 
 func GetReport(id string) *report.Base {
