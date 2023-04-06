@@ -1,11 +1,15 @@
 package user
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	redis2 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
 	"medicinal_share/tool"
+	"medicinal_share/tool/db/elasticsearch"
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/db/redis"
 	"medicinal_share/tool/encrypt/md5"
@@ -138,5 +142,49 @@ func UpdateDoctorStatus(userId int64, status DoctorStatus) {}
 
 // GetBestDoctor 获取最佳匹配的医生
 func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
-
+	tag := make([]int64, 0)
+	err := mysql.GetConnect().Model(&entity.Tag{}).
+		Select("parent").
+		Where("id in (?)", tags).
+		Group("parent").Find(&tags).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		panic(err)
+	}
+	queryBody := map[string]any{
+		"size":    1,
+		"_source": "doctor_id",
+		"query": map[string]any{"bool": map[string]any{
+			"should": map[string]any{
+				"terms": map[string][]int64{"tags": tag},
+			},
+			"filter": map[string]any{
+				"term": map[string]DoctorStatus{
+					"status": Online,
+				},
+			},
+		}},
+		"sort": []map[string]any{
+			{
+				"_geo_distance": map[string]any{
+					"location": map[string]any{
+						"lat": latit,
+						"lon": long,
+					},
+					"order":         "asc",
+					"distance_type": "plane",
+				},
+			},
+			{"_score": map[string]string{
+				"order": "asc",
+			}},
+		},
+	}
+	byt, _ := json.Marshal(queryBody)
+	res := map[string]any{}
+	elasticsearch.Get(&res,
+		elasticsearch.GetClient().Search.WithBody(bytes.NewBuffer(byt)),
+		elasticsearch.GetClient().Search.WithIndex("doctor_tag"),
+	)
+	fmt.Println(res)
+	return 0
 }

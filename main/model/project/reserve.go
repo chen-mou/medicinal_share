@@ -32,15 +32,32 @@ func LoadReserveById(reserveId int64) error {
 	return err
 }
 
-func CreateProjectReserve() {}
+func CreateProjectReserve(reserve entity.ProjectReserve) {
+	err := mysql.GetConnect().Create(reserve).Error
+	if err != nil {
+		panic(err)
+	}
+}
 
 func GetProjectReserveById(id int64, tx *gorm.DB) *entity.ProjectReserve {
 	res := &entity.ProjectReserve{}
-	err := tx.Where("id = ?", id).Association("Project").Find(res)
+	err := tx.Joins("Project").Joins("DoctorInfo").Where("id = ?", id).Take(res).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil
 	}
 	return res
+}
+
+func GetProjectReserveByProjectId(projectId int64) []*entity.ProjectReserve {
+	res := make([]*entity.ProjectReserve, 0)
+	err := mysql.GetConnect().
+		Joins("Project").
+		Joins("DoctorInfo").
+		Where("project_id = ?").Find(&projectId).Error
+	if err == nil || err == gorm.ErrRecordNotFound {
+		return res
+	}
+	panic(err)
 }
 
 func UpdateProjectReserveNum(id int64, tx *gorm.DB) {

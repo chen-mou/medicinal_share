@@ -15,12 +15,13 @@ type Hospital struct {
 //ProjectReserve 用于展示项目可以预约的时间
 type ProjectReserve struct {
 	Id         int64      `json:"id"`
-	Num        int        `json:"num"` //人数
+	Num        int        `json:"num"`                 //人数
+	ReserveNum int        `json:"reserve_num" gorm:""` //预约人数
 	Start      Time       `json:"start"`
 	End        Time       `json:"end"`
 	ProjectId  int64      `json:"project_id"`
 	DoctorId   int64      `json:"doctor_id"` //主治医生
-	Project    Project    `json:"project" gorm:"foreignKey:"projectId"`
+	Project    Project    `json:"project" gorm:"foreignKey:ProjectId"`
 	DoctorInfo DoctorInfo `json:"doctor_info" gorm:"foreignKey:DoctorId"`
 }
 
