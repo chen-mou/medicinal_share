@@ -42,6 +42,10 @@ func SaveMessage(msg *entity.Message, tx *gorm.DB) error {
 	return tx.Save(msg).Error
 }
 
+func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
+
+}
+
 func GetLastMessage(user1 int64, user2 int64, tim time.Time) []*entity.Message {
 	db := mysql.GetConnect()
 	model := &entity.Message{}

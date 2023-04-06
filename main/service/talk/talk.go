@@ -34,7 +34,7 @@ func Send(sender int64, msg string, typ string, c *socket.Conn) {
 		Status: 0,
 	}
 	byt, _ := json.Marshal(message)
-	c.SendTo(string(byt), getter)
+	socket.SendTo(string(byt), getter)
 
 	go func() {
 		talk.SaveMessage(message, mysql.GetConnect())
@@ -50,4 +50,10 @@ func CreateRoom(userId int64, doctor int64) string {
 	}
 	talk.CreateRoom(room, roomId)
 	return roomId
+}
+
+func Treat(userId int64, tags []int64, long float64, latit float64) string {
+	doctorId := talk.GetBestDoctor(tags, long, latit)
+	room := CreateRoom(userId, doctorId)
+	return room
 }

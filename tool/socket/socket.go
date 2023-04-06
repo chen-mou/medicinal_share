@@ -71,7 +71,7 @@ func (c Conn) send(message string) {
 	wsutil.WriteServerText(c.conn, tool.StringToBytes(message))
 }
 
-func (c Conn) SendTo(message string, sendTo int64) {
+func SendTo(message string, sendTo int64) {
 	id := strconv.FormatInt(sendTo, 10)
 	cmd := redis1.DB.Get(context.TODO(), idPrefix+id)
 	res, err := cmd.Result()
@@ -155,7 +155,7 @@ func (cm ConnManager) Run() {
 	}()
 }
 
-//run 监听uri
+// run 监听uri
 func (cm ConnManager) run(listen net.Listener) {
 	for {
 		conn, err := listen.Accept()
@@ -199,7 +199,7 @@ func (cm ConnManager) run(listen net.Listener) {
 	}
 }
 
-//onHeader 解析Header的时候执行
+// onHeader 解析Header的时候执行
 func (cm ConnManager) onHeader(key, value []byte, co *Conn) error {
 	f, ok := cm.headerHandler[string(key)]
 	if !ok {
@@ -208,7 +208,7 @@ func (cm ConnManager) onHeader(key, value []byte, co *Conn) error {
 	return f(co, tool.BytesToString(value))
 }
 
-//onBeforeUpgrade 协议升级前执行
+// onBeforeUpgrade 协议升级前执行
 func (cm ConnManager) onBeforeUpgrade(co *Conn) (ws.HandshakeHeader, error) {
 	err := co.Auth()
 	if err != nil {
