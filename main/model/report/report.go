@@ -34,7 +34,7 @@ func GetReportByUserId(userId int64, last int64, num int) []*report.Base {
 			},
 		},
 	}
-	byt, _ := json.Marshal(body)
+	byt, _ := json.Marshal(queryBody)
 	res := make([]*report.Base, 0)
 	search := elasticsearch.GetClient().Search
 	elasticsearch.Get(res, search.WithBody(bytes.NewBuffer(byt)), search.WithIndex("report-*"))
