@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-redis/redis/v8"
-	"medicinal_share/main/middleware"
 	"reflect"
 	"strconv"
 	"time"
@@ -152,7 +151,7 @@ func (c Cache) Get(val any, getter func() any) any {
 				}
 			}
 		} else {
-			panic(middleware.NewCustomErr(middleware.ERROR, "服务器繁忙"))
+			panic("服务器繁忙")
 		}
 	}
 	if err != nil {
@@ -176,7 +175,7 @@ func (c Cache) HGet(val any, getter func() any) any {
 					HSet(c.key, val, 5*time.Minute)
 				}
 			} else {
-				panic(middleware.NewCustomErr(middleware.ERROR, "服务器繁忙"))
+				panic("服务器繁忙")
 			}
 		}
 	}
@@ -205,7 +204,7 @@ func (c Cache) LoadInt(getter func() (int, error)) (int, error) {
 				}
 			}
 		} else {
-			panic(middleware.NewCustomErr(middleware.ERROR, "服务器繁忙"))
+			panic("服务器繁忙")
 		}
 	}
 	if err != nil {

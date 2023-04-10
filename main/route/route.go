@@ -5,6 +5,7 @@ import (
 	"medicinal_share/main/controller/file"
 	"medicinal_share/main/controller/order"
 	"medicinal_share/main/controller/project"
+	"medicinal_share/main/controller/tag"
 	"medicinal_share/main/controller/user"
 	"medicinal_share/main/controller/wares"
 	"medicinal_share/main/middleware"
@@ -49,6 +50,8 @@ func Route(mod int) *gin.Engine {
 	order.Route(app)
 
 	project.Route(app)
+
+	tag.Route(app)
 
 	return app
 }
