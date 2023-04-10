@@ -3,8 +3,8 @@ package elasticsearch
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/elastic/go-elasticsearch/v7"
-	"github.com/elastic/go-elasticsearch/v7/esapi"
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"io/ioutil"
 	"math/rand"
 	"medicinal_share/tool/encrypt/md5"

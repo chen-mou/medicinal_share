@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"gorm.io/gorm"
 	"medicinal_share/main/entity"
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/db/redis"
@@ -42,5 +43,15 @@ func GetTagByType(typ string, parent int64) []*entity.Tag {
 		}
 		return res
 	})
+	return res
+}
+
+func SearchByKeyWord(key string) []*entity.Tag {
+	res := make([]*entity.Tag, 0)
+	if err := mysql.GetConnect().Model(&entity.Tag{}).Where("name like ?", key+"%").Find(&res).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			panic(err)
+		}
+	}
 	return res
 }

@@ -33,3 +33,15 @@ func CreateTime(t time.Time) Time {
 		&t,
 	}
 }
+
+func (t *Time) MarshalJSON() ([]byte, error) {
+	s := t.tim.Format("2006-01-02 15-04-05")
+	return []byte("\"" + s + "\""), nil
+}
+
+func (t *Time) UnmarshalJSON(byt []byte) error {
+	tim := string(byt)
+	t1, _ := time.Parse("\"2006-01-02 15-04-05\"", tim)
+	t.tim = &t1
+	return nil
+}
