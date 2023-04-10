@@ -21,7 +21,7 @@ func LoadReserveById(reserveId int64) error {
 	_, err := c.LoadInt(func() (int, error) {
 		err := mysql.GetConnect().Select("num").Where("id = ?", reserveId).Take(res).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return 0, nil
+			return 0, err
 		}
 		if err != nil {
 			panic(err)

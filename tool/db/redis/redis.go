@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-redis/redis/v8"
+	"medicinal_share/main/middleware"
 	"reflect"
 	"strconv"
 	"time"
@@ -16,6 +17,8 @@ type Empty struct {
 func (Empty) Error() string {
 	return "空"
 }
+
+var RedisEmpty = Empty{}
 
 var DB *redis.ClusterClient
 
@@ -67,7 +70,7 @@ func HGet(key string, v any) error {
 		return err
 	}
 	if len(r) == 0 {
-		return Empty{}
+		return RedisEmpty
 	}
 	return c.Scan(v)
 }
@@ -123,7 +126,7 @@ func (c Cache) getCache(val any) (any, error) {
 
 func (c Cache) getHCache(val any) (any, error) {
 	err := HGet(c.key, val)
-	if errors.Is(err, Empty{}) {
+	if err == RedisEmpty {
 		return nil, nil
 	}
 	if err != nil {
@@ -134,48 +137,46 @@ func (c Cache) getHCache(val any) (any, error) {
 
 // Get 安全的从数据库和缓存中拿取对象参数要是指针
 func (c Cache) Get(val any, getter func() any) any {
-	_, err := c.getCache(val)
+	v, err := c.getCache(val)
 	if err != nil && err == redis.Nil {
 		lock := RLock(c.lock)
-		if lock.TryLock(3 * time.Second) {
-			val = getter()
-			if val != nil {
-				jsn, _ := json.Marshal(val)
-				DB.Set(context.TODO(), c.key, string(jsn), 20*time.Minute)
-			} else {
-				DB.Set(context.TODO(), c.key, "", 5*time.Minute)
+		if !lock.TryLockWithTime(3*time.Second, 3*time.Second) {
+			v, err = c.getCache(val)
+			if err != nil && err == redis.Nil {
+				v = getter()
+				if val != nil {
+					jsn, _ := json.Marshal(v)
+					DB.Set(context.TODO(), c.key, string(jsn), 20*time.Minute)
+				} else {
+					DB.Set(context.TODO(), c.key, "", 5*time.Minute)
+				}
 			}
 		} else {
-			val, err = c.getCache(val)
-			for err == redis.Nil {
-				time.Sleep(10 * time.Millisecond)
-				val, err = c.getCache(val)
-			}
+			panic(middleware.NewCustomErr(middleware.ERROR, "服务器繁忙"))
 		}
 	}
 	if err != nil {
 		panic(err)
 	}
-	return val
+	return v
 }
 
 // HGet 安全的拿取对象用HGet参数要是指针 TODO:完成这个方法
 func (c Cache) HGet(val any, getter func() any) any {
-	_, err := c.getHCache(val)
+	val, err := c.getHCache(val)
 	if err != nil && errors.Is(err, Empty{}) {
 		lock := RLock(c.lock)
-		if lock.TryLock(3 * time.Second) {
-			val = getter()
-			if val != nil {
-				HSet(c.key, val, 20*time.Minute)
-			} else {
-				HSet(c.key, val, 5*time.Minute)
-			}
-		} else {
+		if lock.TryLockWithTime(3*time.Second, 3*time.Second) {
 			val, err = c.getHCache(val)
-			for err == redis.Nil {
-				time.Sleep(10 * time.Millisecond)
-				val, err = c.getHCache(val)
+			if err != nil && err == RedisEmpty {
+				val = getter()
+				if val != nil {
+					HSet(c.key, val, 20*time.Minute)
+				} else {
+					HSet(c.key, val, 5*time.Minute)
+				}
+			} else {
+				panic(middleware.NewCustomErr(middleware.ERROR, "服务器繁忙"))
 			}
 		}
 	}
@@ -193,19 +194,18 @@ func (c Cache) LoadInt(getter func() (int, error)) (int, error) {
 	s, err = DB.Get(context.TODO(), c.key).Result()
 	if err != nil && err == redis.Nil {
 		lock := RLock(c.lock)
-		if lock.TryLock(3 * time.Second) {
-			val, err = getter()
-			if err != nil {
-				DB.Set(context.TODO(), c.key, strconv.Itoa(val), 20*time.Minute)
-			} else {
-				DB.Set(context.TODO(), c.key, "", 5*time.Minute)
+		if lock.TryLockWithTime(3*time.Second, 3*time.Second) {
+			s, err = DB.Get(context.TODO(), c.key).Result()
+			if err != nil && err == redis.Nil {
+				val, err = getter()
+				if err != nil {
+					DB.Set(context.TODO(), c.key, strconv.Itoa(val), 20*time.Minute)
+				} else {
+					DB.Set(context.TODO(), c.key, "", 5*time.Minute)
+				}
 			}
 		} else {
-			s, err = DB.Get(context.TODO(), c.key).Result()
-			for err == redis.Nil {
-				time.Sleep(10 * time.Millisecond)
-				s, err = DB.Get(context.TODO(), c.key).Result()
-			}
+			panic(middleware.NewCustomErr(middleware.ERROR, "服务器繁忙"))
 		}
 	}
 	if err != nil {

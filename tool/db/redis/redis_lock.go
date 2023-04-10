@@ -23,19 +23,6 @@ func RLock(key string) *rlock {
 }
 
 const (
-	scriptLock = `
-		while true do
-			if (redis.call('EXISTS', KEYS[1]) == 0) then
-				redis.call('hset', KEYS[1], 'count', 1);
-				redis.call('hset', KEYS[1], 'getter', ARGV[1]);
-				redis.call('expire', KEYS[1], ARGV[2]);
-				return 1;
-			end;
-			if (redis.call('hget', KEYS[1], 'getter') == ARGV[1]) then
-				redis.call('hincrby', KEYS[1], 'count', 1);
-				return 1;
-			end;
-		end;`
 	scriptUnLock = `
 		if (redis.call('EXISTS', KEYS[1]) == 0) then
 			return -1;
@@ -64,7 +51,6 @@ const (
 )
 
 var (
-	lock    string
 	unlock  string
 	tryLock string
 )
@@ -92,8 +78,8 @@ func init() {
 	for DB == nil {
 	}
 	var err error
-	scripts := []string{scriptLock, scriptTryLock, scriptUnLock}
-	addr := []*string{&lock, &tryLock, &unlock}
+	scripts := []string{scriptTryLock, scriptUnLock}
+	addr := []*string{&tryLock, &unlock}
 	for i := 0; i < len(scripts); i++ {
 		cmd := DB.ScriptLoad(context.TODO(), scripts[i])
 		*addr[i], err = cmd.Result()
@@ -112,17 +98,18 @@ func (sole *SoleId) GetID() string {
 	return md5.Hash(str)
 }
 
-func (l *rlock) Lock(tim time.Duration) {
-	for atomic.LoadInt32(&l.state) == 1 {
-	}
-	val := GetSole("RedisId", 8).GetID()
-	DB.EvalSha(context.TODO(), lock, []string{l.key}, val, int64(tim.Seconds()))
-	l.state = 1
-	l.val = val
-	go l.watchDog(tim)
-}
+//Lock 这个方法有点问题会导致redis卡死
+//func (l *rlock) Lock(tim time.Duration) {
+//	for atomic.LoadInt32(&l.state) == 1 {
+//	}
+//	val := GetSole("RedisId", 8).GetID()
+//	DB.EvalSha(context.TODO(), lock, []string{l.key}, val, int64(tim.Seconds()))
+//	l.state = 1
+//	l.val = val
+//	go l.watchDog(tim)
+//}
 
-//TODO: 超时续
+// watchDog 超时续
 func (l *rlock) watchDog(tim time.Duration) {
 	for {
 		ctx, _ := context.WithTimeout(context.TODO(), tim-time.Second)
@@ -148,7 +135,7 @@ func (l *rlock) Unlock() {
 
 }
 
-//TryLockWithTime exp 是锁的过期时间 tim 是过期时间
+// TryLockWithTime exp 是锁的过期时间 tim 是过期时间
 func (l *rlock) TryLockWithTime(exp, tim time.Duration) bool {
 	ctx, _ := context.WithTimeout(context.TODO(), tim)
 	if l.TryLock(exp) {
