@@ -22,3 +22,12 @@ func CreateOrder(order *entity.Order, reserveId int64, tx *gorm.DB) {
 		panic(err)
 	}
 }
+
+func UpdateOrderStatus(id int64, status string, tx *gorm.DB) {
+	err := tx.Model(&entity.Order{}).
+		Where("id = ?", id).
+		Update("status = ?", status).Error
+	if err != nil {
+		panic(err)
+	}
+}
