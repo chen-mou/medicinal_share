@@ -20,6 +20,7 @@ func GetTagByType(ctx *gin.Context) {
 	})
 }
 
+//TODO:这个方法要根据搜索类型和分页
 func GetTagByKey(ctx *gin.Context) {
 	key := ctx.Query("key")
 	if key == "" {
