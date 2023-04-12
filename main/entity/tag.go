@@ -5,7 +5,8 @@ type Tag struct {
 	Parent int64  `json:"parent"`
 	Name   string `json:"name"`
 	End    bool   `json:"end"`
-	Type   string `json:"type" gorm:"index"` //那种类型的tag 如领域，症状，病情，学位
+	//Type 有以下值Symptom Area Degree
+	Type string `json:"type" gorm:"index"` //那种类型的tag 如领域，症状，病情，学位
 }
 
 type TagRelation struct {

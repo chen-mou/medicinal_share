@@ -9,6 +9,18 @@ type Time struct {
 	tim *time.Time
 }
 
+type Page struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
+func CreatePage(num int, size int) *Page {
+	return &Page{
+		Limit:  size,
+		Offset: size * (num - 1),
+	}
+}
+
 func (t *Time) Scan(value interface{}) error {
 	*t.tim = value.(time.Time)
 	return nil
