@@ -48,8 +48,14 @@ func GetTagByType(typ string, parent int64) []*entity.Tag {
 
 func SearchByKeyWord(key string, parent int64, typ string, page *entity.Page) []*entity.Tag {
 	res := make([]*entity.Tag, 0)
+	param := []any{parent, typ}
+	where := "parent = ? and type = ?"
+	if key != "" {
+		where += "and name like ?"
+		param = append(param, key+"%")
+	}
 	if err := mysql.GetConnect().Model(&entity.Tag{}).
-		Where("parent = ? and type = ? and name like ?", parent, typ, key+"%").
+		Where(where, param...).
 		Limit(page.Limit).Offset(page.Offset).
 		Find(&res).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
