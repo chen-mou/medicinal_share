@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	redis1 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
 	"medicinal_share/main/middleware"
@@ -25,7 +26,7 @@ func Create(version string, reverseId int64, userId int64) {
 	}
 	rstr := strconv.FormatInt(reverseId, 10)
 	ctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
-	n, err := redis.DB.Incr(ctx, project.ReserveGet+":"+rstr).Result()
+	n, err := redis.DB.Decr(ctx, project.ReserveGet+":"+rstr).Result()
 	if err != nil {
 		panic(err)
 	}
@@ -40,11 +41,32 @@ func Create(version string, reverseId int64, userId int64) {
 		}
 		order.CreateOrder(ord, reverseId, mysql.GetConnect())
 		project.UpdateProjectReserveNum(reverseId, tx)
+		redis.DB.Set(context.TODO(), "Order-"+strconv.FormatInt(ord.Id, 64), "", 30*time.Minute)
 		return nil
 	})
 }
 
-// Pay TODO:付款成功创建预约，付款检查redis是否存在目标订单，不存在则支付超时，存在则支付并更新数据库
-func Pay(orderId int64) {
+// Pay 支付
+func Pay(orderId int64, userId int64) {
+	_, err := redis.DB.Get(context.TODO(), "Order-"+strconv.FormatInt(orderId, 64)).Result()
+	if err == redis1.Nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, "订单已过期或不存在"))
+	}
+	if err != nil {
+		panic(err)
+	}
+	err = mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
+		if !order.ExistOrder(orderId, userId, tx) {
+			return middleware.NewCustomErr(middleware.ERROR, "订单不属于你或不存在")
+		}
+		order.UpdateOrderStatus(orderId, entity.UnUsing, tx)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+}
 
+func GetUserOrder(userId, last int64, status string) []*entity.Order {
+	return order.GetUserOrder(userId, last, status)
 }

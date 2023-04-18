@@ -20,10 +20,21 @@ func CreateOrder(ctx *gin.Context) {
 	})
 }
 
-// GetOrder TODO:获取用户的订单
-func GetOrder(ctx *gin.Context) {}
+// GetOrder 获取用户的订单
+func GetOrder(ctx *gin.Context) {
+	param := struct {
+		Type string `form:"type"`
+		Last int64  `form:"last"`
+	}{}
+	ctx.BindJSON(&param)
+	usr := tool.GetNowUser(ctx)
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": order.GetUserOrder(usr.Id, param.Last, param.Type),
+	})
+}
 
-// Pay TODO:支付
+// Pay 支付
 func Pay(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
 	type param struct {
@@ -31,4 +42,8 @@ func Pay(ctx *gin.Context) {
 	}
 	p := &param{}
 	ctx.BindJSON(p)
+	order.Pay(p.OrderId, usr.Id)
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+	})
 }

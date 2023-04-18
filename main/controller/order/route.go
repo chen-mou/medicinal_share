@@ -8,6 +8,6 @@ import (
 func Route(app *gin.Engine) {
 	g := app.Group("order")
 
-	g.Use(middleware.Verify).POST("/order", CreateOrder)
+	g.Use(middleware.Verify).POST("/order", CreateOrder).POST("/pay", Pay).GET("/getUserOrder", GetOrder)
 
 }
