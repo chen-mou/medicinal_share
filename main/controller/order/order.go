@@ -24,4 +24,11 @@ func CreateOrder(ctx *gin.Context) {
 func GetOrder(ctx *gin.Context) {}
 
 // Pay TODO:支付
-func Pay(ctx *gin.Context) {}
+func Pay(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	type param struct {
+		OrderId int64 `json:"order_id"`
+	}
+	p := &param{}
+	ctx.BindJSON(p)
+}

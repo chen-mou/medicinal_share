@@ -52,6 +52,21 @@ func GetHospitalByNear(g1 float64, g2 float64, last int64, rg int) []*entity.Hos
 	return model.GetErrorHandler(err, res).([]*entity.Hospital)
 }
 
+func GetHospitalById(id int64) *entity.Hospital {
+	res := &entity.Hospital{}
+	err := mysql.GetConnect().
+		Joins("AvatarFile").
+		Joins("Background").
+		Preload("Projects").Where("id = ?", id).Take(res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
+	}
+	return res
+}
+
 func GetProjectByHospitalId(id int64, last int64) []*entity.Project {
 	res := make([]*entity.Project, 0)
 	err := mysql.GetConnect().Table("project").

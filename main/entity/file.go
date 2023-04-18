@@ -22,7 +22,7 @@ type FileData struct {
 	Status   string `json:"status" gorm:"size:16;not null"`
 	Type     string `json:"type" gorm:"size:16;index:idx_uploader_type;not null"`
 	Uploader int64  `json:"uploader" gorm:"index:idx_uploader_type;not null"`
-	File     *File  `json:"file" gorm:"foreignKey:file_id"`
+	File     *File  `json:"file,omitempty" gorm:"foreignKey:file_id"`
 }
 
 func (File) TableName() string {
@@ -35,5 +35,14 @@ func (FileData) TableName() string {
 
 func (FileData) AfterFind(tx *gorm.DB) error {
 	fmt.Println("fuck you")
+	return nil
+}
+
+func (f File) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + f.Uri + "\""), nil
+}
+
+func (f *File) UnmarshalJSON(byt []byte) error {
+	f.Uri = string(byt[1 : len(byt)-1])
 	return nil
 }
