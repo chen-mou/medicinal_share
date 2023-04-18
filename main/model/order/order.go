@@ -11,6 +11,7 @@ import (
 func CreateOrder(order *entity.Order, reserveId int64, tx *gorm.DB) {
 	order.Id, _ = tool.GetId("order")
 	order.Status = entity.Padding
+	order.CreateAt = entity.Now()
 	err := tx.Create(order).Error
 	if err != nil {
 		panic(err)

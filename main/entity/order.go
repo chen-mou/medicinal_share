@@ -12,11 +12,12 @@ const (
 )
 
 type Order struct {
-	Id      int64       `json:"id" gorm:"primaryKey;autoIncrement"`
-	UserId  int64       `json:"user_id" gorm:"index"`
-	Price   float64     `json:"price"`
-	Status  OrderStatus `json:"status" gorm:"size:16"`
-	Version string      `json:"version" gorm:"-"`
+	Id       int64       `json:"id" gorm:"primaryKey;autoIncrement"`
+	UserId   int64       `json:"user_id" gorm:"index"`
+	Price    float64     `json:"price"`
+	Status   OrderStatus `json:"status" gorm:"size:16"`
+	Version  string      `json:"version" gorm:"-"`
+	CreateAt Time        `json:"create_at"`
 }
 
 type OrderData struct {
