@@ -76,6 +76,12 @@ func GetProjectByHospitalId(id int64, last int64) []*entity.Project {
 
 }
 
+func SearchProjectName(key string, hospital, last int64) []*entity.Project {
+	res := make([]*entity.Project, 0)
+	err := mysql.GetConnect().Table("project").Where("hospital_id= ? and id > ? and name like ?", hospital, last, key+"%").Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.Project)
+}
+
 func CreateReserve(projectId, userId int64, time time.Time) {}
 
 func UpdateReserve() {}
