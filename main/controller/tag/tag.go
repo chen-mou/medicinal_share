@@ -2,8 +2,8 @@ package tag
 
 import (
 	"github.com/gin-gonic/gin"
-	"medicinal_share/main/middleware"
-	"medicinal_share/main/model/tag"
+	"medicinal_share/main/entity"
+	"medicinal_share/main/service/tag"
 )
 
 func GetTagByType(ctx *gin.Context) {
@@ -13,21 +13,27 @@ func GetTagByType(ctx *gin.Context) {
 	}
 	p := &param{}
 	ctx.BindQuery(p)
-	res := tag.GetTagByType(p.Type, p.Parent)
+	res := tag.GetByType(p.Type, p.Parent)
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
 		"data": res,
 	})
 }
 
-//TODO:这个方法要根据搜索类型和分页
 func GetTagByKey(ctx *gin.Context) {
-	key := ctx.Query("key")
-	if key == "" {
-		panic(middleware.NewCustomErr(middleware.ERROR, "缺少参数key"))
+	type param struct {
+		Type    string `form:"type"`
+		Parent  int64  `form:"parent"`
+		Key     string `form:"key"`
+		PageNum int    `form:"page_num"`
+	}
+	p := &param{}
+	err := ctx.BindQuery(p)
+	if err != nil {
+		panic(err)
 	}
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
-		"data": tag.SearchByKeyWord(key),
+		"data": tag.Search(p.Key, p.Type, p.Parent, entity.CreatePage(p.PageNum, 20)),
 	})
 }

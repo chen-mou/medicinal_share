@@ -46,12 +46,25 @@ func GetTagByType(typ string, parent int64) []*entity.Tag {
 	return res
 }
 
-func SearchByKeyWord(key string) []*entity.Tag {
+func SearchByKeyWord(key string, parent int64, typ string, page *entity.Page) []*entity.Tag {
 	res := make([]*entity.Tag, 0)
-	if err := mysql.GetConnect().Model(&entity.Tag{}).Where("name like ?", key+"%").Find(&res).Error; err != nil {
+	param := []any{parent, typ}
+	where := "parent = ? and type = ?"
+	if key != "" {
+		where += "and name like ?"
+		param = append(param, key+"%")
+	}
+	if err := mysql.GetConnect().Model(&entity.Tag{}).
+		Where(where, param...).
+		Limit(page.Limit).Offset(page.Offset).
+		Find(&res).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
 			panic(err)
 		}
 	}
 	return res
+}
+
+func AddTag(tag entity.Tag) {
+	mysql.GetConnect().Create(&tag)
 }

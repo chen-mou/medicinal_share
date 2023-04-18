@@ -143,10 +143,11 @@ func UpdateDoctorStatus(userId int64, status DoctorStatus) {}
 // GetBestDoctor 获取最佳匹配的医生
 func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
 	tag := make([]int64, 0)
-	err := mysql.GetConnect().Model(&entity.Tag{}).
-		Select("parent").
-		Where("id in (?)", tags).
-		Group("parent").Find(&tags).Error
+	db := mysql.GetConnect()
+	err := db.Model(&entity.TagRelation{}).
+		Select("relation_id").
+		Where("relation_type = 'tag'").
+		Joins("Tag", db.Where("Tag.id in (?) and Tag.type = 'Symptom'", tags)).Scan(&tags).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
