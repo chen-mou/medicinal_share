@@ -189,3 +189,8 @@ func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
 	fmt.Println(res)
 	return 0
 }
+
+//TODO: 测试方法
+func GetBestDoctorTest() int64 {
+	return 1234
+}

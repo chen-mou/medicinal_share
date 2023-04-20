@@ -44,7 +44,7 @@ type Reserve struct {
 	ReserveId int64          `json:"reserve_id" gorm:"index"`
 	Status    string         `json:"status" gorm:"size:16;default:pending"`
 	UserId    int64          `json:"user_id" gorm:"index"`
-	Reserve   ProjectReserve `json:"reserve" gorm:"foreignKey:ProjectId"`
+	Reserve   ProjectReserve `json:"reserve" gorm:"foreignKey:ReserveId"`
 }
 
 func (Hospital) TableName() string {

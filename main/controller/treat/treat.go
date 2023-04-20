@@ -16,7 +16,11 @@ func Treat(ctx *gin.Context) {
 	p := &param{}
 	ctx.BindJSON(p)
 	usr := tool.GetNowUser(ctx)
-	talk.Treat(usr.Id, p.Tags, p.Latitude, p.Longitude)
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": talk.Treat(usr.Id, p.Tags, p.Latitude, p.Longitude),
+	})
+
 }
 
 func Send(conn *socket.Conn, payload string) {

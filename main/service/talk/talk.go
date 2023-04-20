@@ -54,7 +54,8 @@ func CreateRoom(userId int64, doctor int64) string {
 }
 
 func Treat(userId int64, tags []int64, long float64, latit float64) string {
-	doctorId := user.GetBestDoctor(tags, long, latit)
+	//doctorId := user.GetBestDoctor(tags, long, latit)
+	doctorId := user.GetBestDoctorTest()
 	room := CreateRoom(userId, doctorId)
 	return room
 }
