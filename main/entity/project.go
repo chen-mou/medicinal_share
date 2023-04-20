@@ -41,10 +41,10 @@ type Project struct {
 // Reserve 用户预约
 type Reserve struct {
 	Id        int64          `json:"id" gorm:"primaryKey"`
-	ProjectId int64          `json:"project_id" gorm:"index"`
+	ReserveId int64          `json:"reserve_id" gorm:"index"`
 	Status    string         `json:"status" gorm:"size:16;default:pending"`
 	UserId    int64          `json:"user_id" gorm:"index"`
-	Project   ProjectReserve `json:"project" gorm:"foreignKey:ProjectId"`
+	Reserve   ProjectReserve `json:"reserve" gorm:"foreignKey:ProjectId"`
 }
 
 func (Hospital) TableName() string {

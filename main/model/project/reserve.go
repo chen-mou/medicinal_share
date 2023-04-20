@@ -7,6 +7,7 @@ import (
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/db/redis"
 	"strconv"
+	"time"
 )
 
 const (
@@ -48,12 +49,12 @@ func GetProjectReserveById(id int64, tx *gorm.DB) *entity.ProjectReserve {
 	return res
 }
 
-func GetProjectReserveByProjectId(projectId int64) []*entity.ProjectReserve {
+func GetProjectReserveByDateAndProjectId(start, end time.Time, projectId int64) []*entity.ProjectReserve {
 	res := make([]*entity.ProjectReserve, 0)
 	err := mysql.GetConnect().
 		Joins("Project").
 		Joins("DoctorInfo").
-		Where("project_id = ?").Find(&projectId).Error
+		Where("project_id = ? and start between ? and ?", projectId, start, end).Find(&projectId).Error
 	if err == nil || err == gorm.ErrRecordNotFound {
 		return res
 	}

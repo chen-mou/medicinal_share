@@ -11,5 +11,6 @@ func Route(app *gin.Engine) {
 	hospital := app.Group("/hospital")
 
 	hospital.GET("/getNear", GetNearHospital).
-		GET("/:id", GetHospitalById)
+		GET("/:id", GetHospitalById).
+		GET("/getProjectReserveByDateAndProjectId", GetProjectReserveByDateAndProjectId)
 }
