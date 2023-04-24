@@ -190,7 +190,17 @@ func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
 	return 0
 }
 
-//TODO: 测试方法
+func CreateWorker(tx *gorm.DB, hospitalId, userId int64) {
+	err := tx.Create(&entity.Worker{
+		HospitalId: hospitalId,
+		UserId:     userId,
+	}).Error
+	if err != nil {
+		panic(err)
+	}
+}
+
+// GetBestDoctorTest TODO: 测试方法
 func GetBestDoctorTest() int64 {
 	return 1234
 }

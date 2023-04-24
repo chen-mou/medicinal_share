@@ -6,8 +6,8 @@ import (
 	"medicinal_share/main/entity"
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/db/redis"
+	"sort"
 	"strconv"
-	"time"
 )
 
 const (
@@ -27,13 +27,14 @@ func LoadReserveById(reserveId int64) error {
 		if err != nil {
 			panic(err)
 		}
-		return res.Num, nil
+		return res.Overplus, nil
 	})
 
 	return err
 }
 
-func CreateProjectReserve(reserve entity.ProjectReserve) {
+func CreateProjectReserve(reserve *entity.ProjectReserve) {
+	reserve.ReserveNum = 0
 	err := mysql.GetConnect().Create(reserve).Error
 	if err != nil {
 		panic(err)
@@ -49,18 +50,38 @@ func GetProjectReserveById(id int64, tx *gorm.DB) *entity.ProjectReserve {
 	return res
 }
 
-func GetProjectReserveByDateAndProjectId(start, end time.Time, projectId int64) []*entity.ProjectReserve {
+func GetProjectReserveByDateAndProjectId(start, end entity.Time, projectId int64) []*entity.ProjectReserve {
 	res := make([]*entity.ProjectReserve, 0)
 	err := mysql.GetConnect().
 		Joins("Project").
 		Joins("DoctorInfo").
-		Where("project_id = ? and start between ? and ?", projectId, start, end).Find(&projectId).Error
+		Where("project_id = ? "+
+			"and start between ? and ? "+
+			"and overplus > 0", projectId, start, end).Find(&res).Error
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].End.Time().After(res[j].End.Time())
+	})
 	if err == nil || err == gorm.ErrRecordNotFound {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
 		return res
 	}
 	panic(err)
 }
 
+func CreateReserve(reserve []*entity.Reserve, tx *gorm.DB) {
+	err := tx.Create(&reserve).Error
+	if err != nil {
+		panic(err)
+	}
+}
+
 func UpdateProjectReserveNum(id int64, tx *gorm.DB) {
-	tx.Model(&entity.ProjectReserve{}).Where("id = ?", id).Update("num", gorm.Expr("num + 1"))
+	tx.Model(&entity.ProjectReserve{}).
+		Where("id = ?", id).
+		Updates(map[string]any{
+			"num":         gorm.Expr("num - 1"),
+			"reserve_num": gorm.Expr("reserve_num + 1"),
+		})
 }

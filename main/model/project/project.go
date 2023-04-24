@@ -5,10 +5,21 @@ import (
 	"medicinal_share/main/entity"
 	"medicinal_share/main/model"
 	"medicinal_share/tool/db/mysql"
-	"time"
 )
 
 func GetByType(typ string, page int) {}
+
+func GetById(id int64) *entity.Project {
+	res := &entity.Project{}
+	err := mysql.GetConnect().Where("id = ?", id).Take(&res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
+	}
+	return res
+}
 
 func GetAllProject(page int) []*entity.Project {
 	res := make([]*entity.Project, 0)
@@ -46,6 +57,7 @@ func GetHospitalByNear(g1 float64, g2 float64, last int64, rg int) []*entity.Hos
 			Where("id > ?", last).
 			Order("distance"),
 	).Joins("AvatarFile").
+		Preload("AvatarFile.File").
 		Where("distance < ?", rg).
 		Limit(20).
 		Find(&res).Error
@@ -55,9 +67,12 @@ func GetHospitalByNear(g1 float64, g2 float64, last int64, rg int) []*entity.Hos
 func GetHospitalById(id int64) *entity.Hospital {
 	res := &entity.Hospital{}
 	err := mysql.GetConnect().
+		Omit("distance").
 		Joins("AvatarFile").
-		Joins("Background").
-		Preload("Projects").Where("id = ?", id).Take(res).Error
+		Joins("BackgroundFile").
+		Preload("AvatarFile.File").
+		Preload("BackgroundFile.File").
+		Preload("Projects").Where(&entity.Hospital{Id: id}).Take(res).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil
@@ -76,12 +91,12 @@ func GetProjectByHospitalId(id int64, last int64) []*entity.Project {
 
 }
 
+func CreateProject(project *entity.Project) {}
+
 func SearchProjectName(key string, hospital, last int64) []*entity.Project {
 	res := make([]*entity.Project, 0)
 	err := mysql.GetConnect().Table("project").Where("hospital_id= ? and id > ? and name like ?", hospital, last, key+"%").Find(&res).Error
 	return model.GetErrorHandler(err, res).([]*entity.Project)
 }
-
-func CreateReserve(projectId, userId int64, time time.Time) {}
 
 func UpdateReserve() {}

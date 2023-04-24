@@ -2,6 +2,7 @@ package tool
 
 import (
 	"context"
+	"errors"
 	redis2 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"medicinal_share/tool/db/mysql"
@@ -20,21 +21,22 @@ func GetId(name string) (int64, error) {
 		lock := redis.RLock(name + ":ID:LOCK")
 		if lock.TryLock(3 * time.Second) {
 			defer lock.Unlock()
-			var id int
-			err := mysql.GetConnect().Table(name).Order("id desc").Limit(1).Pluck("id", &id).Error
-			if err != nil {
-				if err != gorm.ErrRecordNotFound {
-					return 0, err
+			_, err = redis.DB.Get(context.TODO(), key).Result()
+			if err != redis2.Nil {
+				return 0, err
+			}
+			if err == redis2.Nil {
+				var id int
+				err = mysql.GetConnect().Table(name).Order("id desc").Limit(1).Pluck("id", &id).Error
+				if err != nil {
+					if err != gorm.ErrRecordNotFound {
+						return 0, err
+					}
 				}
+				redis.DB.Do(context.TODO(), "set", key, id)
 			}
-			redis.DB.Do(context.TODO(), "set", key, id)
-
 		} else {
-			_, err := redis.DB.Get(context.TODO(), key).Result()
-			for err == redis2.Nil {
-				_, err = redis.DB.Get(context.TODO(), key).Result()
-				time.Sleep(10 * time.Millisecond)
-			}
+			return 0, errors.New("服务器繁忙")
 		}
 	} else if err != nil {
 		return 0, err

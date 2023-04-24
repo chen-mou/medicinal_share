@@ -1,6 +1,8 @@
 package entity
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type User struct {
 	Id         int64       `json:"id" gorm:"primaryKey"`
@@ -53,6 +55,17 @@ type DoctorInfo struct {
 	Hospital     Hospital       `json:"hospital" gorm:"foreignKey:HospitalId"`
 }
 
+type Worker struct {
+	Id         int64    `json:"id" gorm:"primaryKey;"`
+	HospitalId int64    `json:"hospital_id"`
+	UserId     int64    `json:"user_id" gorm:"uniqueIndex"`
+	Hospital   Hospital `json:"hospital" gorm:"HospitalId"`
+}
+
+func (Worker) TableName() string {
+	return "worker"
+}
+
 func (User) TableName() string {
 	return "user"
 }
@@ -76,4 +89,13 @@ func (DoctorInfo) TableName() string {
 
 func (UserRole) TableName() string {
 	return "user_role"
+}
+
+func (r *UserRole) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + r.Name + "\""), nil
+}
+
+func (r *UserRole) UnmarshalJSON(b []byte) error {
+	r.Name = string(b[1 : len(b)-1])
+	return nil
 }

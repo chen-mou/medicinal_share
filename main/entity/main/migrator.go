@@ -22,5 +22,6 @@ func main() {
 		entity.OrderData{},
 		entity.Hospital{},
 		entity.Message{},
-		entity.ProjectReserve{})
+		entity.ProjectReserve{},
+		entity.Worker{})
 }

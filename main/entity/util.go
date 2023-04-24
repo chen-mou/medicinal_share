@@ -22,7 +22,8 @@ func CreatePage(num int, size int) *Page {
 }
 
 func (t *Time) Scan(value interface{}) error {
-	*t.tim = value.(time.Time)
+	time := value.(time.Time)
+	t.tim = &time
 	return nil
 }
 
@@ -31,6 +32,10 @@ func (t Time) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return *t.tim, nil
+}
+
+func (t Time) Time() time.Time {
+	return *t.tim
 }
 
 func Now() Time {

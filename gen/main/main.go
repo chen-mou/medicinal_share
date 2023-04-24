@@ -4,6 +4,7 @@ import (
 	"gorm.io/gen"
 	"medicinal_share/gen/dao"
 	"medicinal_share/main/entity"
+	"medicinal_share/main/entity/project"
 	"medicinal_share/tool/db/mysql"
 )
 
@@ -21,7 +22,7 @@ func main() {
 
 	g.ApplyInterface(func(user dao.User) {}, entity.User{})
 
-	g.ApplyInterface(func(hospital dao.Hospital, hospital2 entity.Hospital) {})
+	g.ApplyInterface(func(hospital dao.Hospital, hospital2 project.Hospital) {})
 
 	g.Execute()
 

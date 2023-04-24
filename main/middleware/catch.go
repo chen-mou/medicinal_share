@@ -29,6 +29,18 @@ type notFound struct {
 	msg string
 }
 
+type forbid struct {
+	msg string
+}
+
+func (forbid) GetStatus() int {
+	return 403
+}
+
+func (f forbid) Error() string {
+	return f.msg
+}
+
 func (notFound) GetStatus() int {
 	return 404
 }
@@ -64,6 +76,9 @@ func NewCustomErr(typ int, msg string) CustomErr {
 			msg: msg,
 		}
 	case FORBID:
+		return forbid{
+			msg: msg,
+		}
 	case ERROR:
 		return errors{
 			msg: msg,
@@ -94,6 +109,9 @@ func Catch(ctx *gin.Context) {
 			return
 		default:
 			ctx.AbortWithStatusJSON(500, err)
+		}
+		if err != nil {
+			panic(err)
 		}
 	}()
 

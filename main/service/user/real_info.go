@@ -2,7 +2,7 @@ package user
 
 import (
 	"gorm.io/gorm"
-	"medicinal_share/main/entity"
+	user2 "medicinal_share/main/entity"
 	"medicinal_share/main/middleware"
 	"medicinal_share/main/model/file"
 	"medicinal_share/main/model/tag"
@@ -10,7 +10,7 @@ import (
 	"medicinal_share/tool/db/mysql"
 )
 
-func CreateInfo(id int64, real *entity.RealInfo) {
+func CreateInfo(id int64, real *user2.RealInfo) {
 	data := user.GetDataByUserId(id)
 	if data.IsReal {
 		panic(middleware.NewCustomErr(middleware.ERROR, "该账号已经实名认证了"))
@@ -21,7 +21,7 @@ func CreateInfo(id int64, real *entity.RealInfo) {
 	}
 	mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 		info := user.CreateInfo(real, tx)
-		user.UpdateData(&entity.UserData{
+		user.UpdateData(&user2.UserData{
 			UserId: id,
 			InfoId: &info.Id,
 		}, tx)
@@ -29,7 +29,7 @@ func CreateInfo(id int64, real *entity.RealInfo) {
 	})
 }
 
-func CreateDoctorInfo(userId int64, info *entity.DoctorInfo) {
+func CreateDoctorInfo(userId int64, info *user2.DoctorInfo) {
 	data := user.GetDataByUserId(userId)
 	if !data.IsReal {
 		panic(middleware.NewCustomErr(middleware.FORBID, "未实名认证"))
@@ -50,6 +50,6 @@ func CreateDoctorInfo(userId int64, info *entity.DoctorInfo) {
 	})
 }
 
-func GetDoctorInfoByUserId(userId int64) *entity.DoctorInfo {
+func GetDoctorInfoByUserId(userId int64) *user2.DoctorInfo {
 	return user.GetDoctorInfoById(userId)
 }

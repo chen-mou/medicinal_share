@@ -3,7 +3,7 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"medicinal_share/main/entity"
+	user2 "medicinal_share/main/entity"
 	"medicinal_share/main/middleware"
 	"medicinal_share/main/service/file"
 	"medicinal_share/main/service/user"
@@ -13,7 +13,7 @@ import (
 
 func CreateInfo(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
-	info := entity.RealInfo{}
+	info := user2.RealInfo{}
 	ctx.BindJSON(&info)
 	user.CreateInfo(usr.Id, &info)
 	ctx.AbortWithStatusJSON(200, gin.H{
@@ -23,7 +23,7 @@ func CreateInfo(ctx *gin.Context) {
 
 func CreateDoctorInfo(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
-	info := entity.DoctorInfo{}
+	info := user2.DoctorInfo{}
 	ctx.BindJSON(info)
 	user.CreateDoctorInfo(usr.Id, &info)
 	ctx.AbortWithStatusJSON(200, gin.H{

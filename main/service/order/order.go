@@ -4,10 +4,11 @@ import (
 	"context"
 	redis1 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
-	"medicinal_share/main/entity"
+	order2 "medicinal_share/main/entity"
 	"medicinal_share/main/middleware"
 	"medicinal_share/main/model/order"
 	"medicinal_share/main/model/project"
+	projectService "medicinal_share/main/service/project"
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/db/redis"
 	"strconv"
@@ -35,7 +36,7 @@ func Create(version string, reverseId int64, userId int64) {
 	}
 	mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 		p := project.GetProjectReserveById(reverseId, tx)
-		ord := &entity.Order{
+		ord := &order2.Order{
 			UserId: userId,
 			Price:  p.Project.Price,
 		}
@@ -56,10 +57,16 @@ func Pay(orderId int64, userId int64) {
 		panic(err)
 	}
 	err = mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
-		if !order.ExistOrder(orderId, userId, tx) {
+		o := order.Get(orderId, userId, tx)
+		if o != nil {
 			return middleware.NewCustomErr(middleware.ERROR, "订单不属于你或不存在")
 		}
-		order.UpdateOrderStatus(orderId, entity.UnUsing, tx)
+		order.UpdateOrderStatus(orderId, order2.UnUsing, tx)
+		ids := make([]int64, 0)
+		for _, data := range o.Data {
+			ids = append(ids, data.Id)
+		}
+		projectService.CreateReserve(ids, userId, tx)
 		return nil
 	})
 	if err != nil {
@@ -67,6 +74,6 @@ func Pay(orderId int64, userId int64) {
 	}
 }
 
-func GetUserOrder(userId, last int64, status string) []*entity.Order {
+func GetUserOrder(userId, last int64, status string) []*order2.Order {
 	return order.GetUserOrder(userId, last, status)
 }

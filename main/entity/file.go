@@ -8,7 +8,7 @@ import (
 type File struct {
 	Id      int64  `json:"id" gorm:"primaryKey;"`
 	Hash    string `json:"hash" gorm:"unique;size:32;not null"`
-	Machine string `json:"machine" gorm:"size:64;unique;not null"`
+	Machine string `json:"machine" gorm:"size:64;index;not null"`
 	Status  string `json:"status" gorm:"size:16;not null"`
 	Path    string `json:"path" gorm:"size:256;not null"`
 	Uri     string `json:"uri" gorm:"size:256;not null"`

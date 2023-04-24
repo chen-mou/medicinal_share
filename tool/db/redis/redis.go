@@ -139,7 +139,7 @@ func (c Cache) Get(val any, getter func() any) any {
 	v, err := c.getCache(val)
 	if err != nil && err == redis.Nil {
 		lock := RLock(c.lock)
-		if !lock.TryLockWithTime(3*time.Second, 3*time.Second) {
+		if lock.TryLockWithTime(3*time.Second, 5*time.Second) {
 			v, err = c.getCache(val)
 			if err != nil && err == redis.Nil {
 				v = getter()
@@ -154,7 +154,7 @@ func (c Cache) Get(val any, getter func() any) any {
 			panic("服务器繁忙")
 		}
 	}
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		panic(err)
 	}
 	return v
@@ -179,7 +179,7 @@ func (c Cache) HGet(val any, getter func() any) any {
 			}
 		}
 	}
-	if err != nil {
+	if err != nil && err != RedisEmpty {
 		panic(err)
 	}
 	return val
@@ -207,7 +207,7 @@ func (c Cache) LoadInt(getter func() (int, error)) (int, error) {
 			panic("服务器繁忙")
 		}
 	}
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		panic(err)
 	}
 	if s == "" {

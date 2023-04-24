@@ -9,7 +9,7 @@ import (
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 	"io/ioutil"
-	"medicinal_share/main/entity"
+	user2 "medicinal_share/main/entity"
 	"medicinal_share/main/model/user"
 	"medicinal_share/tool"
 	redis1 "medicinal_share/tool/db/redis"
@@ -53,7 +53,7 @@ type Conn struct {
 	conn   net.Conn
 	auth   string
 	method string
-	info   *entity.User
+	info   *user2.User
 	//redisConn *redis.ClusterClient
 	Id string
 }
@@ -119,7 +119,7 @@ func (c *Conn) Auth() error {
 	return nil
 }
 
-func (c *Conn) GetCurrentUser() *entity.User {
+func (c *Conn) GetCurrentUser() *user2.User {
 	return c.info
 }
 
