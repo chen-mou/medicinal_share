@@ -24,3 +24,12 @@ type Base struct {
 	Define    Define         `json:"define"`
 	CreateAt  entity.Time    `json:"create_at"`
 }
+
+type Report struct {
+	Id        int             `json:"id" gorm:"primaryKey;autoIncrement"`
+	Result    string          `json:"result" binding:"required"`
+	ImageId   int64           `json:"image_id" binding:"required"`
+	ReserveId int64           `json:"reserve_id" binding:"required"`
+	Image     entity.FileData `json:"image" gorm:"foreignKey:ImageId""`
+	Reserve   entity.Reserve  `json:"reserve" gorm:"foreignKey:ReserveId"`
+}

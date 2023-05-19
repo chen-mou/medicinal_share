@@ -17,6 +17,7 @@ import (
 	"medicinal_share/tool/encrypt/md5"
 	"medicinal_share/tool/pool"
 	"net"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -27,6 +28,16 @@ const (
 	idPrefix = "Socket:ID:"
 	channel  = "Socket_Message"
 )
+
+var notFound string
+
+func init() {
+	byt, _ := json.Marshal(map[string]any{
+		"code": 404,
+		"msg":  "没有找到目标方法",
+	})
+	notFound = string(byt)
+}
 
 type ConnManager struct {
 	cmap          map[string]*Conn
@@ -63,12 +74,21 @@ type Message struct {
 	Data   string `json:"data"`
 }
 
+type Result struct {
+	Code int `json:"code"`
+	Data any `json:"data"`
+}
+
 func NewConn(conn net.Conn) *Conn {
 	return &Conn{conn: conn}
 }
 
 func (c Conn) send(message string) {
-	wsutil.WriteServerText(c.conn, tool.StringToBytes(message))
+	byt, _ := json.Marshal(Result{
+		Code: 0,
+		Data: message,
+	})
+	wsutil.WriteServerText(c.conn, byt)
 }
 
 func SendTo(message string, sendTo int64) {
@@ -158,13 +178,30 @@ func (cm ConnManager) Run() {
 
 // run 监听uri
 func (cm ConnManager) run(listen net.Listener) {
-	for {
-		conn, err := listen.Accept()
+	defer func() {
+		err := recover()
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println("gobwas 挂掉了")
+	}()
+	for {
+		conn, err := listen.Accept()
+		if err != nil {
+			SendError(conn, err)
+			continue
+		}
 		co := NewConn(conn)
 		up := ws.Upgrader{
+			OnRequest: func(uri []byte) error {
+				url, err := url.Parse(string(uri))
+				if err != nil {
+					return err
+				}
+				token := url.Query().Get("token")
+				co.SetAuth(token)
+				return nil
+			},
 			OnHeader: func(key, value []byte) error {
 				return cm.onHeader(key, value, co)
 			},
@@ -175,7 +212,7 @@ func (cm ConnManager) run(listen net.Listener) {
 		_, err = up.Upgrade(conn)
 		if err != nil {
 			SendError(conn, err)
-			return
+			continue
 		}
 		ctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
 		err = p.Submit(ctx, func() {
@@ -186,11 +223,29 @@ func (cm ConnManager) run(listen net.Listener) {
 					panic(err)
 				}
 				data, err := ioutil.ReadAll(reader)
-				fmt.Println(strconv.FormatInt(co.info.Id, 10) + ":" + string(data))
-				wsutil.WriteServerText(conn, tool.StringToBytes("receive"))
-				//res := Message{}
-				//json.Unmarshal(data, &res)
-				//cm.handler[res.Method](co, res.Data)
+				//fmt.Println(strconv.FormatInt(co.info.Id, 10) + ":" + string(data))
+				//wsutil.WriteServerText(conn, tool.StringToBytes("receive"))
+				fmt.Printf("收到消息:%s\n", data)
+				res := Message{}
+				json.Unmarshal(data, &res)
+				f, ok := cm.handler[res.Method]
+				if !ok {
+					co.send(notFound)
+				}
+				go func() {
+					defer func() {
+						err := recover()
+						if err != nil {
+							switch err.(type) {
+							case error:
+								SendError(co.conn, err.(error))
+							case string:
+								co.send(err.(string))
+							}
+						}
+					}()
+					f(co, res.Data)
+				}()
 			}
 		})
 		if err != nil {
@@ -234,4 +289,9 @@ func (cm *ConnManager) HeaderHandler(key string, f func(*Conn, string) error) *C
 }
 
 func SendError(conn net.Conn, err error) {
+	byt, _ := json.Marshal(Result{
+		Code: 1,
+		Data: err.Error(),
+	})
+	wsutil.WriteServerText(conn, byt)
 }

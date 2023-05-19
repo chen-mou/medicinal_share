@@ -51,3 +51,7 @@ func CreateReserve(projectReserveId []int64, userId int64, tx *gorm.DB) {
 	}
 	project.CreateReserve(reserve, tx)
 }
+
+func GetUserReserve(userId int64) []*entity.Reserve {
+	return project.GetReserveByUserId(userId)
+}

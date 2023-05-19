@@ -4,6 +4,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type Sex Enum
+
+const (
+	MAN Sex = iota
+	WOMAN
+)
+
 type User struct {
 	Id         int64       `json:"id" gorm:"primaryKey"`
 	Username   string      `json:"username" gorm:"uniqueIndex;not null;size:32"`
@@ -28,9 +35,9 @@ type UserData struct {
 // RealInfo TODO: 完成实名认证的模型定义
 type RealInfo struct {
 	Id       int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name     string `json:"name" gorm:"size:16"`
-	Sex      string `json:"sex" gorm:"size:2"`
-	IDNumber string `json:"id_number"`
+	Name     string `json:"name" gorm:"size:16" binding:"required"`
+	Sex      Sex    `json:"sex" gorm:"size:2"`
+	IDNumber string `json:"id_number" binding:"required"`
 }
 
 type UserRole struct {
@@ -41,18 +48,18 @@ type UserRole struct {
 
 type DoctorInfo struct {
 	Id           int            `json:"id" gorm:"primaryKey"`
-	DockerAvatar int64          `json:"docker_avatar"`
+	DoctorAvatar int64          `json:"doctor_avatar"`
 	UserId       int64          `json:"user_id" gorm:"uniqueIndex;not null"`
 	HospitalId   int64          `json:"hospital_id" gorm:"index"`             //工作医院
 	Position     string         `json:"position" gorm:"size:64"`              //职位
 	Status       string         `json:"status" gorm:"size:16;default:normal"` //医生当前状态 normal 空闲 busy 忙碌中 offline 下线
 	Description  string         `json:"description" gorm:"type:tinytext"`
 	TagsId       []int64        `json:"tags_id" gorm:"-"`
-	Tags         []*TagRelation `json:"tags" gorm:"foreignKey:RelationId"`
-	InfoId       *int64         `json:"infoId" gorm:"uniqueIndex;not null"`
-	Info         *RealInfo      `json:"info" gorm:"foreignKey:InfoId"`
-	Avatar       *FileData      `json:"avatar" gorm:"foreignKey:DockerAvatar"`
-	Hospital     Hospital       `json:"hospital" gorm:"foreignKey:HospitalId"`
+	Tags         []*TagRelation `json:"tags,omitempty" gorm:"foreignKey:RelationId"`
+	InfoId       *int64         `json:"infoId,omitempty" gorm:"uniqueIndex;not null"`
+	Info         *RealInfo      `json:"info,omitempty" gorm:"foreignKey:InfoId"`
+	Avatar       *FileData      `json:"avatar,omitempty" gorm:"foreignKey:DoctorAvatar"`
+	Hospital     *Hospital      `json:"hospital" gorm:"foreignKey:HospitalId"`
 }
 
 type Worker struct {

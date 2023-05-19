@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 const (
@@ -111,7 +112,8 @@ func Catch(ctx *gin.Context) {
 			ctx.AbortWithStatusJSON(500, err)
 		}
 		if err != nil {
-			panic(err)
+			log.Print(err)
+			return
 		}
 	}()
 

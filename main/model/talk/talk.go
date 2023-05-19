@@ -27,12 +27,12 @@ func GetUserNowRoom(usr int64) *entity.Room {
 }
 
 func CreateRoom(room *entity.Room, roomId string) error {
-	redis.HSet("room-"+roomId, room, -1)
 	_, err := redis.DB.Pipelined(context.TODO(), func(pipe redis2.Pipeliner) error {
-		ustr := strconv.FormatInt(room.Custom, 10)
-		dstr := strconv.FormatInt(room.Doctor, 10)
-		pipe.Set(context.TODO(), "user-now-room-"+ustr, roomId, -1)
-		pipe.Set(context.TODO(), "user-now-room"+dstr, roomId, -1)
+		redis.PipeHSet(pipe, "room-"+roomId, room, -1)
+		ustr := strconv.FormatInt(room.CustomId, 10)
+		dstr := strconv.FormatInt(room.DoctorId, 10)
+		pipe.Do(context.TODO(), "set", "user-now-room-"+ustr, roomId)
+		pipe.Do(context.TODO(), "set", "user-now-room"+dstr, roomId)
 		return nil
 	})
 	return err

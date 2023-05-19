@@ -29,7 +29,7 @@ func CreateOrder(o *entity.Order, reserveId int64, tx *gorm.DB) {
 func UpdateOrderStatus(id int64, status entity.Status, tx *gorm.DB) {
 	err := tx.Model(&entity.Order{}).
 		Where("id = ?", id).
-		Update("status = ?", status).Error
+		Update("status", status).Error
 	if err != nil {
 		panic(err)
 	}
@@ -38,6 +38,7 @@ func UpdateOrderStatus(id int64, status entity.Status, tx *gorm.DB) {
 func Get(orderId, userId int64, tx *gorm.DB) *entity.Order {
 	o := &entity.Order{}
 	err := tx.Model(&entity.Order{}).Select("id").
+		Preload("Data").
 		Where("id = ? and user_id = ?", orderId, userId).Take(o).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

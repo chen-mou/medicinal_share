@@ -5,20 +5,20 @@ type ReserveStatue uint
 const (
 	Unused = iota
 	Overdue
-	Completed
+	Completed //完成
 )
 
 // ProjectReserve 用于展示项目可以预约的时间
 type ProjectReserve struct {
-	Id         int64      `json:"id"`
-	Overplus   int        `json:"overplus" gorm:"default:0"`    //人数
-	ReserveNum int        `json:"reserve_num" gorm:"default:0"` //预约人数
-	Start      Time       `json:"start" bind:"required"`
-	End        Time       `json:"end" bind:"required"`
-	ProjectId  int64      `json:"project_id" bind:"required"`
-	DoctorId   int64      `json:"doctor_id" bind:"required"` //主治医生
-	Project    Project    `json:"project" gorm:"foreignKey:ProjectId"`
-	DoctorInfo DoctorInfo `json:"doctor_info" gorm:"foreignKey:DoctorId"`
+	Id         int64       `json:"id"`
+	Overplus   int         `json:"overplus" gorm:"default:0"`    //人数
+	ReserveNum int         `json:"reserve_num" gorm:"default:0"` //预约人数
+	Start      Time        `json:"start" bind:"required"`
+	End        Time        `json:"end" bind:"required"`
+	ProjectId  int64       `json:"project_id" bind:"required"`
+	DoctorId   int64       `json:"doctor_id" bind:"required"` //主治医生
+	Project    *Project    `json:"project" gorm:"foreignKey:ProjectId"`
+	DoctorInfo *DoctorInfo `json:"doctor_info" gorm:"foreignKey:DoctorId"`
 }
 
 // Project 项目介绍
@@ -37,7 +37,8 @@ type Reserve struct {
 	ProjectReserveId int64          `json:"project_reserve_id" gorm:"index"`
 	Status           ReserveStatue  `json:"status" gorm:"size:16;default:0"`
 	UserId           int64          `json:"user_id" gorm:"index"`
-	Reserve          ProjectReserve `json:"reserve" gorm:"foreignKey:ProjectReserveId"`
+	User             *User          `json:"user" gorm:"UserId"`
+	ProjectReserve   ProjectReserve `json:"project_reserve" gorm:"foreignKey:ProjectReserveId"`
 }
 
 func (Project) TableName() string {

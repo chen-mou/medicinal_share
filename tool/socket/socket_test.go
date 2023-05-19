@@ -6,6 +6,7 @@ import (
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 	"io"
+	"net"
 	"testing"
 	"time"
 )
@@ -71,4 +72,12 @@ func TestSendAndGet(t *testing.T) {
 		}
 	}()
 	select {}
+}
+
+func TestTcp(t *testing.T) {
+	_, err := net.Dial("tcp", "127.0.0.1:15777")
+	if err != nil {
+		panic(err)
+	}
+
 }

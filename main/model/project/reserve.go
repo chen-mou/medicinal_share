@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
+	"medicinal_share/main/model"
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/db/redis"
 	"sort"
@@ -20,7 +21,7 @@ func LoadReserveById(reserveId int64) error {
 	rstr := strconv.FormatInt(reserveId, 10)
 	c := redis.NewCache(ReserveGetLock+":"+rstr, ReserveGet+":"+rstr)
 	_, err := c.LoadInt(func() (int, error) {
-		err := mysql.GetConnect().Select("num").Where("id = ?", reserveId).Take(res).Error
+		err := mysql.GetConnect().Select("overplus").Where("id = ?", reserveId).Take(res).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, err
 		}
@@ -43,9 +44,12 @@ func CreateProjectReserve(reserve *entity.ProjectReserve) {
 
 func GetProjectReserveById(id int64, tx *gorm.DB) *entity.ProjectReserve {
 	res := &entity.ProjectReserve{}
-	err := tx.Joins("Project").Joins("DoctorInfo").Where("id = ?", id).Take(res).Error
+	err := tx.Joins("Project").Joins("DoctorInfo").Where("project_reserve.id = ?", id).Take(res).Error
 	if err == gorm.ErrRecordNotFound {
 		return nil
+	}
+	if err != nil {
+		panic(err)
 	}
 	return res
 }
@@ -55,6 +59,7 @@ func GetProjectReserveByDateAndProjectId(start, end entity.Time, projectId int64
 	err := mysql.GetConnect().
 		Joins("Project").
 		Joins("DoctorInfo").
+		Preload("DoctorInfo.Info").
 		Where("project_id = ? "+
 			"and start between ? and ? "+
 			"and overplus > 0", projectId, start, end).Find(&res).Error
@@ -78,10 +83,33 @@ func CreateReserve(reserve []*entity.Reserve, tx *gorm.DB) {
 }
 
 func UpdateProjectReserveNum(id int64, tx *gorm.DB) {
-	tx.Model(&entity.ProjectReserve{}).
+	err := tx.Model(&entity.ProjectReserve{}).
 		Where("id = ?", id).
 		Updates(map[string]any{
-			"num":         gorm.Expr("num - 1"),
+			"overplus":    gorm.Expr("overplus - 1"),
 			"reserve_num": gorm.Expr("reserve_num + 1"),
-		})
+		}).Error
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GetReserveByUserId(userId int64) []*entity.Reserve {
+	res := make([]*entity.Reserve, 0)
+	err := mysql.GetConnect().Model(&entity.Reserve{}).Where(&entity.Reserve{
+		UserId: userId,
+	}).
+		Joins("ProjectReserve").
+		Preload("ProjectReserve.Project").
+		Preload("ProjectReserve.DoctorInfo").
+		Preload("ProjectReserve.DoctorInfo.Avatar").Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.Reserve)
+}
+
+func UpdateReserveStatus(reserveId int64, status entity.ReserveStatue, tx *gorm.DB) {
+	if err := tx.Model(&entity.Reserve{}).
+		Where("id = ?", reserveId).
+		Update("status", status).Error; err != nil {
+		panic(err)
+	}
 }

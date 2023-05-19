@@ -13,7 +13,9 @@ func Route(app *gin.Engine) {
 
 	reserve := app.Group("/reserve")
 
-	reserve.GET("/getProjectReserveByDateAndProjectId", GetProjectReserveByDateAndProjectId)
+	reserve.GET("/getProjectReserveByDateAndProjectId", GetProjectReserveByDateAndProjectId).
+		Use(middleware.Verify).
+		GET("/userReserve", GetUserReserve)
 
 	hospital := app.Group("/hospital")
 

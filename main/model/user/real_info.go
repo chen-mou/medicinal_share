@@ -34,7 +34,9 @@ func getDoctorInfoByIdFormDB(userId int64) *entity.DoctorInfo {
 	err := mysql.GetConnect().
 		Model(info).
 		Where("user_id = ?", userId).
-		Joins("Info").Preload("Tags").
+		Joins("Info").
+		Preload("Tags").
+		Preload("Avatar").
 		Take(info).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

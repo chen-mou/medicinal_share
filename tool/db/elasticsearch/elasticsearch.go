@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"medicinal_share/tool/encrypt/md5"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -23,15 +24,15 @@ var config = elasticsearch.Config{
 	Transport: &http.Transport{MaxIdleConns: 10},
 }
 
-func init() {
-	var err error
-	client, err = elasticsearch.NewClient(config)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func GetClient() *elasticsearch.Client {
+	once := &sync.Once{}
+	once.Do(func() {
+		var err error
+		client, err = elasticsearch.NewClient(config)
+		if err != nil {
+			panic(err)
+		}
+	})
 	return client
 }
 

@@ -2,6 +2,7 @@ package entity
 
 import (
 	"database/sql/driver"
+	"reflect"
 	"time"
 )
 
@@ -52,13 +53,20 @@ func CreateTime(t time.Time) Time {
 }
 
 func (t *Time) MarshalJSON() ([]byte, error) {
-	s := t.tim.Format("2006-01-02 15-04-05")
+	s := t.tim.Format("2006-01-02 15:04:05")
 	return []byte("\"" + s + "\""), nil
 }
 
 func (t *Time) UnmarshalJSON(byt []byte) error {
 	tim := string(byt)
-	t1, _ := time.Parse("\"2006-01-02 15-04-05\"", tim)
+	t1, _ := time.Parse("\"2006-01-02 15:04:05\"", tim)
 	t.tim = &t1
 	return nil
+}
+
+type Enum uint8
+
+func (e Enum) MarshalJSON() ([]byte, error) {
+	t := reflect.TypeOf(e)
+	return []byte("\"" + t.Name() + "\""), nil
 }

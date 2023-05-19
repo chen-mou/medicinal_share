@@ -9,6 +9,7 @@ import (
 	"medicinal_share/tool/db/mysql"
 	"medicinal_share/tool/encrypt/md5"
 	"medicinal_share/tool/socket"
+	"strconv"
 	"time"
 )
 
@@ -21,10 +22,10 @@ func Send(sender int64, msg string, typ string, c *socket.Conn) {
 		panic(middleware.NewCustomErr(middleware.ERROR, "房间已关闭或医生还未准备好"))
 	}
 	var getter int64
-	if room.Doctor == sender {
-		getter = room.Custom
+	if room.DoctorId == sender {
+		getter = room.CustomId
 	} else {
-		getter = room.Doctor
+		getter = room.DoctorId
 	}
 	message := &entity.Message{
 		Sender: sender,
@@ -36,24 +37,31 @@ func Send(sender int64, msg string, typ string, c *socket.Conn) {
 	}
 	byt, _ := json.Marshal(message)
 	socket.SendTo(string(byt), getter)
-
+	socket.SendTo(string(byt), sender)
 	go func() {
 		talk.SaveMessage(message, mysql.GetConnect())
 	}()
 }
 
 func CreateRoom(userId int64, doctor int64) string {
-	roomId := md5.Hash(time.Now().String())
+	roomId := md5.Hash(time.Now().String() + strconv.FormatInt(userId, 10) + strconv.FormatInt(doctor, 10))
 	room := &entity.Room{
-		Custom: userId,
-		Doctor: doctor,
-		Status: entity.Waiting,
+		CustomId: userId,
+		DoctorId: doctor,
+		Status:   entity.Waiting,
 	}
-	talk.CreateRoom(room, roomId)
+	err := talk.CreateRoom(room, roomId)
+	if err != nil {
+		panic(err)
+	}
 	return roomId
 }
 
 func Treat(userId int64, tags []int64, long float64, latit float64) string {
+	usr := user.GetDataByUserId(userId)
+	if !usr.IsReal {
+		panic(middleware.NewCustomErr(middleware.ERROR, "请先实名"))
+	}
 	//doctorId := user.GetBestDoctor(tags, long, latit)
 	doctorId := user.GetBestDoctorTest()
 	room := CreateRoom(userId, doctorId)

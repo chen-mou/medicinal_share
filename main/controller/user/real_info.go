@@ -14,7 +14,9 @@ import (
 func CreateInfo(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
 	info := user2.RealInfo{}
-	ctx.BindJSON(&info)
+	if err := ctx.ShouldBindJSON(&info); err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
 	user.CreateInfo(usr.Id, &info)
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
@@ -46,6 +48,14 @@ func GetDoctorInfo(ctx *gin.Context) {
 	})
 }
 
+func IsDoctor(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": user.IsDoctor(usr.Id),
+	})
+}
+
 func UploadDockerAvatar(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
 	f, err := ctx.FormFile("file")
@@ -56,14 +66,13 @@ func UploadDockerAvatar(ctx *gin.Context) {
 	if info == nil {
 		panic(middleware.NewCustomErr(middleware.FORBID, "错误操作"))
 	}
-	var id int64
+	//var id int64
 	file.Upload(f, "doctor_avatar", usr.Id, func(i int64, db *gorm.DB) error {
-		id = i
+		ctx.AbortWithStatusJSON(200, gin.H{
+			"code": 0,
+			"data": i,
+		})
 		return nil
-	})
-	ctx.AbortWithStatusJSON(200, gin.H{
-		"code": 0,
-		"data": id,
 	})
 }
 

@@ -135,13 +135,13 @@ func (l *rlock) Unlock() {
 
 }
 
-// TryLockWithTime exp 是锁的过期时间 tim 是过期时间
+// TryLockWithTime exp 是锁的过期时间 tim 是等待时间
 func (l *rlock) TryLockWithTime(exp, tim time.Duration) bool {
 	ctx, _ := context.WithTimeout(context.TODO(), tim)
-	if l.TryLock(exp) {
-		return true
-	}
 	for {
+		if l.TryLock(exp) {
+			return true
+		}
 		select {
 		case <-ctx.Done():
 			return false

@@ -62,3 +62,11 @@ func GetProjectReserveByDateAndProjectId(ctx *gin.Context) {
 		"data": project.GetProjectReserveByDataAndProject(time, p.ProjectId),
 	})
 }
+
+func GetUserReserve(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": project.GetUserReserve(usr.Id),
+	})
+}

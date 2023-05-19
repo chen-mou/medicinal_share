@@ -104,7 +104,9 @@ func CreateData(userId int64, tx *gorm.DB) *entity.UserData {
 
 func GetDataByUserId(userId int64) *entity.UserData {
 	data := entity.UserData{}
-	err := mysql.GetConnect().Where("user_id = ?", userId).Take(&data).Error
+	err := mysql.GetConnect().Where("user_id = ?", userId).
+		Joins("AvatarFile").
+		Preload("AvatarFile.File").Take(&data).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil
@@ -118,6 +120,14 @@ func UpdateData(data *entity.UserData, tx *gorm.DB) *entity.UserData {
 	err := tx.Model(&entity.UserData{}).Where("user_id = ?", data.UserId).Updates(*data).Error
 	if err != nil {
 		panic(err)
+	}
+	if data.InfoId != nil {
+		err = tx.Model(&entity.DoctorInfo{}).
+			Where("user_id = ?", data.UserId).
+			Update("info_id", data.InfoId).Error
+		if err != nil {
+			panic(err)
+		}
 	}
 	return data
 }

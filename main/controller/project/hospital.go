@@ -48,6 +48,8 @@ func GetNearHospital(ctx *gin.Context) {
 	})
 }
 
+func SearchHospital() {}
+
 func UpdateHospitalAvatar(ctx *gin.Context) {
 	updateHospitalPhoto(ctx, "avatar")
 }

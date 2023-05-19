@@ -20,7 +20,7 @@ type FileData struct {
 	Suffix   string `json:"suffix" gorm:"size:16;not null"`
 	FileId   int64  `json:"file_id" gorm:"index;not null"`
 	Status   string `json:"status" gorm:"size:16;not null"`
-	Type     string `json:"type" gorm:"size:16;index:idx_uploader_type;not null"`
+	Type     string `json:"type" gorm:"size:32;index:idx_uploader_type;not null"`
 	Uploader int64  `json:"uploader" gorm:"index:idx_uploader_type;not null"`
 	File     *File  `json:"file,omitempty" gorm:"foreignKey:file_id"`
 }

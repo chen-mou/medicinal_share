@@ -40,16 +40,21 @@ func CreateDoctorInfo(userId int64, info *user2.DoctorInfo) {
 	}
 	if file.GetUserFile(data.UserId,
 		"doctor_avatar",
-		info.DockerAvatar) == nil {
+		info.DoctorAvatar) == nil {
 		panic(middleware.NewCustomErr(middleware.NO_REPETITION, "目标图片不存在"))
 	}
 	mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 		info = user.CreateDoctorInfo(info, tx)
 		tag.CreateTagRelation(info.TagsId, "AREA", int64(info.Id))
+		user.CreateRole(userId, "Doctor", tx)
 		return nil
 	})
 }
 
 func GetDoctorInfoByUserId(userId int64) *user2.DoctorInfo {
 	return user.GetDoctorInfoById(userId)
+}
+
+func IsDoctor(userId int64) bool {
+	return GetDoctorInfoByUserId(userId) != nil
 }

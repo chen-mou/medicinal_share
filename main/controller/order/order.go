@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gin-gonic/gin"
+	"medicinal_share/main/middleware"
 	"medicinal_share/main/service/order"
 	"medicinal_share/tool"
 )
@@ -13,10 +14,13 @@ func CreateOrder(ctx *gin.Context) {
 		ReverseId int64  `json:"reverse_id"`
 	}
 	p := &param{}
-	ctx.BindJSON(p)
-	order.Create(p.Version, p.ReverseId, usr.Id)
+	if err := ctx.ShouldBindJSON(p); err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
+	id := order.Create(p.Version, p.ReverseId, usr.Id)
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
+		"id":   id,
 	})
 }
 

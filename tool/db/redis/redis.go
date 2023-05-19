@@ -60,7 +60,8 @@ func HGet(key string, v any) error {
 	if err != nil {
 		return err
 	}
-	if val == -1 || val == -2 {
+	if val == -2 {
+		DB.Del(context.TODO(), key)
 		return redis.Nil
 	}
 	c := DB.HGetAll(context.TODO(), key)
@@ -74,6 +75,37 @@ func HGet(key string, v any) error {
 	return c.Scan(v)
 }
 
+//使用管道来调用hset 过期时间单位为秒
+func PipeHSet(db redis.Pipeliner, key string, v any, expire int64) error {
+	val := reflect.ValueOf(v)
+	t := reflect.TypeOf(v)
+	if t.Kind() == reflect.Pointer {
+		val = val.Elem()
+		t = t.Elem()
+	}
+	for i := 0; i < val.NumField(); i++ {
+		fieldv := val.Field(i)
+		fieldt := t.Field(i)
+		name, ok := fieldt.Tag.Lookup("redis")
+		if !ok {
+			name = fieldt.Name
+		}
+		db.HSet(context.TODO(), key, name, fieldv.Interface())
+	}
+	args := []any{"set", key + ":expire"}
+	if v == nil {
+		args = append(args, "")
+	} else {
+		args = append(args, "value")
+	}
+	if expire != -1 {
+		args = append(args, "ex", expire)
+	}
+	db.Do(context.TODO(), args...)
+	return nil
+}
+
+//如果过期时间为不过期不要使用这个方法
 func HSet(key string, v any, expire time.Duration) error {
 	_, err := DB.Pipelined(context.TODO(), func(pipeliner redis.Pipeliner) error {
 		val := reflect.ValueOf(v)
@@ -140,6 +172,7 @@ func (c Cache) Get(val any, getter func() any) any {
 	if err != nil && err == redis.Nil {
 		lock := RLock(c.lock)
 		if lock.TryLockWithTime(3*time.Second, 5*time.Second) {
+			defer lock.Unlock()
 			v, err = c.getCache(val)
 			if err != nil && err == redis.Nil {
 				v = getter()
@@ -166,6 +199,7 @@ func (c Cache) HGet(val any, getter func() any) any {
 	if err != nil && errors.Is(err, Empty{}) {
 		lock := RLock(c.lock)
 		if lock.TryLockWithTime(3*time.Second, 3*time.Second) {
+			defer lock.Unlock()
 			val, err = c.getHCache(val)
 			if err != nil && err == RedisEmpty {
 				val = getter()
@@ -194,11 +228,13 @@ func (c Cache) LoadInt(getter func() (int, error)) (int, error) {
 	if err != nil && err == redis.Nil {
 		lock := RLock(c.lock)
 		if lock.TryLockWithTime(3*time.Second, 3*time.Second) {
+			defer lock.Unlock()
 			s, err = DB.Get(context.TODO(), c.key).Result()
 			if err != nil && err == redis.Nil {
 				val, err = getter()
-				if err != nil {
-					DB.Set(context.TODO(), c.key, strconv.Itoa(val), 20*time.Minute)
+				s = strconv.Itoa(val)
+				if err == nil {
+					DB.Set(context.TODO(), c.key, val, 20*time.Minute)
 				} else {
 					DB.Set(context.TODO(), c.key, "", 5*time.Minute)
 				}
@@ -224,6 +260,7 @@ func SafeGet(key, lockKey string, cache func() any, getter func() any) any {
 	if v.IsNil() {
 		lock := RLock(lockKey)
 		if lock.TryLock(3 * time.Second) {
+			defer lock.Unlock()
 			val = getter()
 			if val != nil {
 				jsn, _ := json.Marshal(val)
@@ -254,6 +291,9 @@ const AntiShakeScript = `
 var antiShake string
 
 func AntiShake(key string) bool {
-	res, _ := DB.EvalSha(context.TODO(), antiShake, []string{key}).Result()
+	res, err := DB.EvalSha(context.TODO(), antiShake, []string{key}).Result()
+	if err != nil {
+		panic(err)
+	}
 	return res == 1
 }

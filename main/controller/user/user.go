@@ -67,7 +67,7 @@ func UploadAvatar(ctx *gin.Context) {
 		return db.Model(&user2.UserData{}).Where("user_id = ?", user.Id).Update("avatar", i).Error
 	})
 	ctx.AbortWithStatusJSON(200, gin.H{
-		"data": 0,
+		"code": 0,
 	})
 }
 

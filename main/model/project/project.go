@@ -98,5 +98,3 @@ func SearchProjectName(key string, hospital, last int64) []*entity.Project {
 	err := mysql.GetConnect().Table("project").Where("hospital_id= ? and id > ? and name like ?", hospital, last, key+"%").Find(&res).Error
 	return model.GetErrorHandler(err, res).([]*entity.Project)
 }
-
-func UpdateReserve() {}

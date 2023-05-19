@@ -3,6 +3,7 @@ package pool
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 )
 
@@ -48,6 +49,12 @@ func (p *pool) Submit(ctx context.Context, f func()) error {
 	select {
 	case p.pool <- struct{}{}:
 		go func() {
+			defer func() {
+				err := recover()
+				if err != nil {
+					fmt.Println(err)
+				}
+			}()
 			f()
 			<-p.pool
 		}()
