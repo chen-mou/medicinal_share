@@ -4,6 +4,7 @@ type ReserveStatue uint
 
 const (
 	Unused = iota
+	Using
 	Overdue
 	Completed //完成
 )
@@ -33,12 +34,13 @@ type Project struct {
 
 // Reserve 用户预约
 type Reserve struct {
-	Id               int64          `json:"id" gorm:"primaryKey"`
-	ProjectReserveId int64          `json:"project_reserve_id" gorm:"index"`
-	Status           ReserveStatue  `json:"status" gorm:"size:16;default:0"`
-	UserId           int64          `json:"user_id" gorm:"index"`
-	User             *User          `json:"user" gorm:"UserId"`
-	ProjectReserve   ProjectReserve `json:"project_reserve" gorm:"foreignKey:ProjectReserveId"`
+	Id               int64           `json:"id" gorm:"primaryKey"`
+	ProjectReserveId int64           `json:"project_reserve_id" gorm:"index"`
+	Status           ReserveStatue   `json:"status" gorm:"size:16;default:0"`
+	UserId           int64           `json:"user_id" gorm:"index"`
+	User             *User           `json:"user" gorm:"UserId"`
+	ProjectReserve   *ProjectReserve `json:"project_reserve" gorm:"foreignKey:ProjectReserveId"`
+	ShareReports     []ShareReport   `json:"share_reports" gorm:"foreignKey:ReserveId"`
 }
 
 func (Project) TableName() string {
@@ -51,4 +53,8 @@ func (Reserve) TableName() string {
 
 func (ProjectReserve) TableName() string {
 	return "project_reserve"
+}
+
+func (ShareReport) TableName() string {
+	return "share_report"
 }

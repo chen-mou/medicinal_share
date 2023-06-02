@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
-	"medicinal_share/main/entity/report"
 	"medicinal_share/main/middleware"
 	"medicinal_share/main/service/file"
 	service "medicinal_share/main/service/report"
@@ -41,22 +40,31 @@ func UploadReportImage(ctx *gin.Context) {
 }
 
 func CreateReport(ctx *gin.Context) {
-	r := &report.Report{}
+	r := &entity.Report{}
 	err := ctx.ShouldBindJSON(r)
+	usr := tool.GetNowUser(ctx)
 	if err != nil {
 		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
 	}
-	service.UploadReport(r)
+	service.UploadReport(r, usr.Id)
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
 	})
 }
 
-func MyReport(ctx *gin.Context) {
+func MyUnShareReport(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
+	type param struct {
+		ReserveId int64 `form:"reserve_id" binding:"required"`
+	}
+	p := &param{}
+	err := ctx.ShouldBindQuery(p)
+	if err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
-		"data": service.GetUserReport(usr.Id),
+		"data": service.GetUserReport(usr.Id, p.ReserveId),
 	})
 }
 
@@ -65,5 +73,70 @@ func DoctorReport(ctx *gin.Context) {
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 200,
 		"data": service.GetDoctorReport(usr.Id),
+	})
+}
+
+func ShareReport(ctx *gin.Context) {
+	type param struct {
+		ReserveId int64   `json:"reserve_id" binding:"required"`
+		ReportsId []int64 `json:"reports_id" binding:"required"`
+	}
+	p := &param{}
+	usr := tool.GetNowUser(ctx)
+	err := ctx.ShouldBindJSON(p)
+	if err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
+	service.CreateShareReport(usr.Id, p.ReserveId, p.ReportsId)
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+	})
+}
+
+func GetShareReport(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	type param struct {
+		ReserveId int64 `form:"reserve_id" binding:"required"`
+	}
+	p := &param{}
+	err := ctx.ShouldBindQuery(p)
+	if err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": service.GetShareReport(usr.Id, p.ReserveId),
+	})
+}
+
+func GetReportById(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	type param struct {
+		ReportId int64 `form:"report_id" binding:"required"`
+	}
+	p := &param{}
+	err := ctx.ShouldBindQuery(p)
+	if err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": service.GetReportById(p.ReportId, usr.Id),
+	})
+}
+
+func GetReportByReserveId(ctx *gin.Context) {
+	usr := tool.GetNowUser(ctx)
+	type param struct {
+		ReserveId int64 `form:"reserve_id" binding:"required"`
+	}
+	p := &param{}
+	err := ctx.ShouldBindQuery(p)
+	if err != nil {
+		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
+	}
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": service.GetByReserveId(p.ReserveId, usr.Id),
 	})
 }

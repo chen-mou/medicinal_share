@@ -53,6 +53,9 @@ func CreateTime(t time.Time) Time {
 }
 
 func (t *Time) MarshalJSON() ([]byte, error) {
+	if t.tim == nil {
+		return nil, nil
+	}
 	s := t.tim.Format("2006-01-02 15:04:05")
 	return []byte("\"" + s + "\""), nil
 }

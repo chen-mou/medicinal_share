@@ -18,12 +18,25 @@ func Treat(ctx *gin.Context) {
 	usr := tool.GetNowUser(ctx)
 	ctx.AbortWithStatusJSON(200, gin.H{
 		"code": 0,
-		"data": talk.Treat(usr.Id, p.Tags, p.Latitude, p.Longitude),
+		"data": talk.Treat(usr.Id, p.Tags, p.Longitude, p.Latitude),
 	})
 
+}
+
+func GetRoomInfo(ctx *gin.Context) {
+	roomId := ctx.Query("room_id")
+	ctx.AbortWithStatusJSON(200, gin.H{
+		"code": 0,
+		"data": talk.GetRoom(roomId),
+	})
 }
 
 func Send(conn *socket.Conn, payload string) {
 	usr := conn.GetCurrentUser()
 	talk.Send(usr.Id, payload, "", conn)
+}
+
+func Confirm(conn *socket.Conn, payload string) {
+	doc := conn.GetCurrentUser()
+	talk.Confirm(doc.Id, conn)
 }

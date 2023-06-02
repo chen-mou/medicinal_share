@@ -4,9 +4,9 @@ import (
 	"context"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
-	"medicinal_share/main/entity/report"
 	"medicinal_share/main/model"
 	"medicinal_share/tool/db/mysql"
+	"time"
 )
 
 //func Create(projectId int64, userId int64, data map[string]any) {
@@ -80,18 +80,58 @@ import (
 //	}
 //}
 
-func Create(report *report.Report, tx *gorm.DB) {
-	tx.Create(report)
+func Create(report *entity.Report, tx *gorm.DB) {
+	err := tx.Create(report).Error
+	if err != nil {
+		panic(err)
+	}
 }
 
-func GetByUserId(userId int64) []*report.Report {
-	res := make([]*report.Report, 0)
-	err := mysql.GetConnect().Model(&report.Report{}).Joins("Order").
-		Where("Order.user_id = ?", userId).Find(&res).Error
-	return model.GetErrorHandler(err, res).([]*report.Report)
+func GetByUserId(userId, reserveId int64) []*entity.Report {
+	res := make([]*entity.Report, 0)
+	db := mysql.GetConnect()
+	err := db.Model(&entity.Report{}).
+		Joins("Reserve").
+		Where("Reserve.user_id = ? and reports.id not in(?)", userId,
+			db.Model(&entity.ShareReport{}).
+				Select("report_id").
+				Where("reserve_id = ?", reserveId)).Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.Report)
 }
 
-func GetByDoctor(doctorId int) []*entity.Reserve {
+func GetById(id int64) *entity.Report {
+	res := &entity.Report{}
+	err := mysql.GetConnect().Where("id = ?", id).Take(res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
+	}
+	return res
+}
+
+func GetByDoctorAndDate(doctorId int, statue entity.ReserveStatue, start, end time.Time) []*entity.Reserve {
+	res := make([]*entity.Reserve, 0)
+	s := entity.CreateTime(start)
+	e := entity.CreateTime(end)
+	db := mysql.GetConnect().WithContext(context.TODO())
+	err := db.Model(&entity.Reserve{}).
+		Joins("ProjectReserve").
+		Joins("User").
+		Preload("ProjectReserve.Project").
+		Preload("User.UserInfo").
+		Preload("User.UserInfo.AvatarFile").
+		Preload("User.UserInfo.AvatarFile.File").
+		Preload("User.UserInfo.RealInfo").
+		Where("ProjectReserve.doctor_id = ? and"+
+			" Reserve.status = ? and"+
+			" ProjectReserve.start between ? and ?", doctorId, statue, s, e).
+		Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.Reserve)
+}
+
+func GetByDoctor(doctorId int, statue entity.ReserveStatue) []*entity.Reserve {
 	res := make([]*entity.Reserve, 0)
 	db := mysql.GetConnect().WithContext(context.TODO())
 	err := db.Model(&entity.Reserve{}).
@@ -102,7 +142,56 @@ func GetByDoctor(doctorId int) []*entity.Reserve {
 		Preload("User.UserInfo.AvatarFile").
 		Preload("User.UserInfo.AvatarFile.File").
 		Preload("User.UserInfo.RealInfo").
-		Where("ProjectReserve.doctor_id = ?", doctorId).
+		Where("ProjectReserve.doctor_id = ? and"+
+			" Reserve.status = ?", doctorId, statue).
 		Find(&res).Error
 	return model.GetErrorHandler(err, res).([]*entity.Reserve)
+}
+
+func GetByReserveId(reserveId int64) *entity.Report {
+	res := &entity.Report{}
+	err := mysql.GetConnect().Where("reserve_id = ?", reserveId).
+		Joins("Image").Preload("Image.File").Take(res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
+	}
+	return res
+}
+
+func IsUserReports(reports []int64, userId int64) bool {
+	res := make([]*entity.Report, 0)
+	mysql.GetConnect().
+		Model(&entity.Report{}).
+		Joins("Reserve").
+		Where("Reserve.user_id = ? and reports.id in(?)", userId, reports).Find(&res)
+	return len(res) == len(reports)
+}
+
+func HaveReportPermission(report int64, doc int) bool {
+	db := mysql.GetConnect()
+	sp := &entity.ShareReport{}
+	err := db.Where("report_id = ? and reserve_id in (?)", report,
+		db.Model(&entity.Reserve{}).
+			Joins("ProjectReserve").
+			Where("ProjectReserve.doctor_id = ?", doc)).Take(sp).Error
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			panic(err)
+		}
+		return false
+	}
+	return true
+}
+
+func GetShareReportByReserveId(reserveId int64) []*entity.ShareReport {
+	res := make([]*entity.ShareReport, 0)
+	err := mysql.GetConnect().
+		Where("share_report.reserve_id = ?", reserveId).
+		Joins("Report").
+		Preload("Report.Image").
+		Preload("Report.Image.File").Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.ShareReport)
 }

@@ -90,6 +90,9 @@ func PipeHSet(db redis.Pipeliner, key string, v any, expire int64) error {
 		if !ok {
 			name = fieldt.Name
 		}
+		if name == "-" {
+			continue
+		}
 		db.HSet(context.TODO(), key, name, fieldv.Interface())
 	}
 	args := []any{"set", key + ":expire"}

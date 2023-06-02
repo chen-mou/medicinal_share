@@ -35,7 +35,7 @@ func GetNearHospital(ctx *gin.Context) {
 		Last      int64   `form:"last"`
 	}
 	param := Param{}
-	err := ctx.BindQuery(&param)
+	err := ctx.ShouldBindQuery(&param)
 	if err != nil {
 		panic(middleware.NewCustomErr(middleware.ERROR, err.Error()))
 	}

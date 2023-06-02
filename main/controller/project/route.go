@@ -7,7 +7,7 @@ import (
 
 func Route(app *gin.Engine) {
 
-	project := app.Group("project")
+	project := app.Group("/project")
 
 	project.GET("/getByHospitalId", GetByHospitalId)
 
@@ -15,7 +15,10 @@ func Route(app *gin.Engine) {
 
 	reserve.GET("/getProjectReserveByDateAndProjectId", GetProjectReserveByDateAndProjectId).
 		Use(middleware.Verify).
-		GET("/userReserve", GetUserReserve)
+		GET("/userReserve", GetUserReserve).
+		Use(middleware.RoleVerify(middleware.Doctor)).
+		GET("/doctorReserve", GetDoctorReserve).
+		POST("/come", Come)
 
 	hospital := app.Group("/hospital")
 

@@ -5,5 +5,5 @@ import (
 )
 
 func TestGetByUserId(t *testing.T) {
-	GetByDoctor(48)
+	GetByDoctorAndDate(48)
 }

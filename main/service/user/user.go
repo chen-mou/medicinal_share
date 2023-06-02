@@ -17,8 +17,9 @@ func Register(username, password string) *user2.User {
 	password = md5.Hash(password)
 	err := mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
 		usr = user.Create(username, password, tx)
-		user.CreateData(usr.Id, tx)
-		user.CreateRole(usr.Id, "Custom", tx)
+		usr.UserInfo = user.CreateData(usr.Id, tx)
+		usr.Role = make([]*user2.UserRole, 0)
+		usr.Role = append(usr.Role, user.CreateRole(usr.Id, "Custom", tx))
 		return nil
 	})
 	if err != nil {

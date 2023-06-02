@@ -106,10 +106,58 @@ func GetReserveByUserId(userId int64) []*entity.Reserve {
 	return model.GetErrorHandler(err, res).([]*entity.Reserve)
 }
 
+func GetReserveById(id int64) *entity.Reserve {
+	res := &entity.Reserve{}
+	err := mysql.GetConnect().
+		Where(&entity.Reserve{Id: id}).
+		Joins("ProjectReserve").
+		Preload("ProjectReserve.Project").Take(res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+	}
+	return res
+}
+
+func IsUserReserve(reserveId, userId int64) bool {
+	err := mysql.GetConnect().Where("id = ? and user_id = ?", reserveId, userId).Take(&entity.Reserve{}).Error
+	return model.GetErrorHandler(err, entity.Reserve{}) != nil
+}
+
+func IsDoctorReserve(doctorId int, reserveId int64) bool {
+	err := mysql.GetConnect().Joins("ProjectReserve").
+		Where("reserve.id = ? and ProjectReserve.doctor_id = ?", reserveId, doctorId).
+		Take(&entity.Reserve{}).Error
+	return model.GetErrorHandler(err, entity.Reserve{}) != nil
+}
+
 func UpdateReserveStatus(reserveId int64, status entity.ReserveStatue, tx *gorm.DB) {
 	if err := tx.Model(&entity.Reserve{}).
 		Where("id = ?", reserveId).
 		Update("status", status).Error; err != nil {
 		panic(err)
 	}
+}
+
+func CreateShareReport(reportsId []int64, reserveId int64) {
+	sr := make([]*entity.ShareReport, 0)
+	for _, reportId := range reportsId {
+		sr = append(sr, &entity.ShareReport{
+			ReportId:  reportId,
+			ReserveId: reserveId,
+		})
+	}
+	if err := mysql.GetConnect().Model(&entity.ShareReport{}).Create(&sr).Error; err != nil {
+		panic(err)
+	}
+}
+
+func GetShareReportByReserveId(reserveId int64) []*entity.ShareReport {
+	res := make([]*entity.ShareReport, 0)
+	err := mysql.GetConnect().Model(&entity.ShareReport{}).
+		Where("reserve_id = ?", reserveId).
+		Joins("Report").
+		Find(&res).Error
+	return model.GetErrorHandler(err, res).([]*entity.ShareReport)
 }

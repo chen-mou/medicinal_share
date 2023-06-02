@@ -3,7 +3,6 @@ package report
 import (
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
-	"medicinal_share/main/entity/report"
 	"medicinal_share/main/middleware"
 	"medicinal_share/main/model/project"
 	model "medicinal_share/main/model/report"
@@ -46,8 +45,12 @@ import (
 //	return nil
 //}
 
-func UploadReport(report *report.Report) *report.Report {
+func UploadReport(report *entity.Report, userId int64) *entity.Report {
 	mysql.GetConnect().Transaction(func(tx *gorm.DB) error {
+		doc := user.GetDoctorInfoByUserId(userId)
+		if !project.IsDoctorReserve(doc.Id, report.ReserveId) {
+			panic(middleware.NewCustomErr(middleware.FORBID, "你没有权限"))
+		}
 		fd := &entity.FileData{}
 		err := tx.Model(fd).Where("id = ? and type = 'report_image'", report.ImageId).Find(fd).Error
 		if err != nil {
@@ -56,6 +59,9 @@ func UploadReport(report *report.Report) *report.Report {
 			}
 			panic(err)
 		}
+		reserve := project.GetReserveById(report.ReserveId)
+		report.Name = reserve.ProjectReserve.Start.Time().Format("2006-01-02 15:04:05") + " ~ " +
+			reserve.ProjectReserve.End.Time().Format("15:04:05") + " " + reserve.ProjectReserve.Project.Name
 		model.Create(report, tx)
 		project.UpdateReserveStatus(report.ReserveId, entity.Completed, tx)
 		return nil
@@ -63,8 +69,12 @@ func UploadReport(report *report.Report) *report.Report {
 	return report
 }
 
-func GetUserReport(userId int64) []*report.Report {
-	return model.GetByUserId(userId)
+func GetUserReport(userId, reserveId int64) []*entity.Report {
+	res := model.GetByUserId(userId, reserveId)
+	for _, v := range res {
+		v.Reserve = nil
+	}
+	return res
 }
 
 func GetDoctorReport(userId int64) []*entity.Reserve {
@@ -72,5 +82,39 @@ func GetDoctorReport(userId int64) []*entity.Reserve {
 	if info == nil {
 		panic(middleware.NewCustomErr(middleware.ERROR, "你不是医生"))
 	}
-	return model.GetByDoctor(info.Id)
+	return model.GetByDoctor(info.Id,
+		entity.Using)
+}
+
+func CreateShareReport(userId, reserveId int64, reportsId []int64) {
+	if !model.IsUserReports(reportsId, userId) {
+		panic(middleware.NewCustomErr(middleware.ERROR, "不是你的报告"))
+	}
+	if !project.IsUserReserve(reserveId, userId) {
+		panic(middleware.NewCustomErr(middleware.ERROR, "不是你的预约"))
+	}
+	project.CreateShareReport(reportsId, reserveId)
+}
+
+func GetShareReport(userId, reserveId int64) []*entity.ShareReport {
+	doc := user.GetDoctorInfoByUserId(userId)
+	if !project.IsDoctorReserve(doc.Id, reserveId) {
+		panic(middleware.NewCustomErr(middleware.FORBID, "没有查看的权限"))
+	}
+	return model.GetShareReportByReserveId(reserveId)
+}
+
+func GetReportById(reportId, userId int64) *entity.Report {
+	doc := user.GetDoctorInfoByUserId(userId)
+	if !model.HaveReportPermission(reportId, doc.Id) {
+		panic(middleware.NewCustomErr(middleware.FORBID, "你没有权限"))
+	}
+	return model.GetById(reportId)
+}
+
+func GetByReserveId(reserveId, userId int64) *entity.Report {
+	if !project.IsUserReserve(reserveId, userId) {
+		panic(middleware.NewCustomErr(middleware.FORBID, "你没有权限"))
+	}
+	return model.GetByReserveId(reserveId)
 }

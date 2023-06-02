@@ -13,12 +13,12 @@ require (
 	gorm.io/plugin/dbresolver v1.4.0
 )
 
-require github.com/elastic/elastic-transport-go/v8 v8.0.0-alpha // indirect
+//require github.com/elastic/elastic-transport-go/v7 v8.0.0-alpha // indirect
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/elastic/go-elasticsearch/v8 v8.0.0
+	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

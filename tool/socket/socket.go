@@ -91,7 +91,7 @@ func (c Conn) send(message string) {
 	wsutil.WriteServerText(c.conn, byt)
 }
 
-func SendTo(message string, sendTo int64) {
+func SendTo(method, message string, sendTo int64) {
 	id := strconv.FormatInt(sendTo, 10)
 	cmd := redis1.DB.Get(context.TODO(), idPrefix+id)
 	res, err := cmd.Result()
@@ -102,12 +102,14 @@ func SendTo(message string, sendTo int64) {
 		panic(err)
 	}
 	m := RedisMessage{
+		Method: method,
 		Msg:    message,
 		SendTo: res,
 	}
-	i, err := redis1.DB.Publish(context.TODO(), channel, m).Result()
+	byt, _ := json.Marshal(m)
+	i, err := redis1.DB.Publish(context.TODO(), channel, string(byt)).Result()
 	for i == 0 || err != nil {
-		i, err = redis1.DB.Publish(context.TODO(), channel, m).Result()
+		i, err = redis1.DB.Publish(context.TODO(), channel, string(byt)).Result()
 	}
 }
 
@@ -130,9 +132,9 @@ func (c *Conn) Auth() error {
 	id, err := strconv.ParseInt(val, 10, 64)
 	usr := user.GetById(id)
 	for _, v := range usr.Role {
-		if v.Name == "doctor" {
+		if v.Name == "Doctor" {
 			usr.DockerInfo = user.GetDoctorInfoById(id)
-			user.UpdateDoctorStatus(usr.Id, user.Online)
+			user.UpdateDoctorStatus(usr.DockerInfo.Id, user.Online)
 		}
 	}
 	c.info = usr
@@ -144,6 +146,7 @@ func (c *Conn) GetCurrentUser() *user2.User {
 }
 
 type RedisMessage struct {
+	Method string
 	SendTo string
 	Msg    string
 }
@@ -154,14 +157,19 @@ func (cm ConnManager) redisListener(client *redis.ClusterClient) {
 		msg, _ := sub.ReceiveMessage(context.TODO())
 		m := msg.Payload
 
-		v := RedisMessage{}
+		v := &RedisMessage{}
 		json.Unmarshal(tool.StringToBytes(m), v)
-
+		//if err != nil {}
 		conn, ok := cm.cmap[v.SendTo]
 		if !ok {
 			continue
 		}
-		go conn.send(v.Msg)
+		s := map[string]string{
+			"msg":    v.Msg,
+			"method": v.Method,
+		}
+		byt, _ := json.Marshal(s)
+		go conn.send(tool.BytesToString(byt))
 	}
 }
 
@@ -294,4 +302,15 @@ func SendError(conn net.Conn, err error) {
 		Data: err.Error(),
 	})
 	wsutil.WriteServerText(conn, byt)
+}
+
+func SendCustomError(conn *Conn, err error) {
+	byt, _ := json.Marshal(map[string]any{
+		"code": 1,
+		"data": map[string]any{
+			"method": "error",
+			"msg":    err.Error(),
+		},
+	})
+	wsutil.WriteServerText(conn.conn, byt)
 }

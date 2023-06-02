@@ -20,22 +20,56 @@ func GetUserNowRoom(usr int64) *entity.Room {
 		return nil
 	}
 	err = redis.HGet("room-"+res, room)
+	r, _ := redis.DB.HGet(context.TODO(), "room-"+res, "tags_id").Result()
+	room.TagsId = entity.Ints64{}
+	room.TagsId.UnmarshalBinary([]byte(r))
 	if err != nil {
 		return nil
 	}
+	room.Id = res
 	return room
+}
+
+func UpdateRoomStatus(roomId string, status entity.RoomStatus) {
+	room := GetRoom(roomId)
+	if room == nil {
+		return
+	}
+	room.Status = status
+	CreateRoom(room, roomId)
 }
 
 func CreateRoom(room *entity.Room, roomId string) error {
 	_, err := redis.DB.Pipelined(context.TODO(), func(pipe redis2.Pipeliner) error {
-		redis.PipeHSet(pipe, "room-"+roomId, room, -1)
+		err := redis.PipeHSet(pipe, "room-"+roomId, room, -1)
+		if err != nil {
+			return err
+		}
 		ustr := strconv.FormatInt(room.CustomId, 10)
 		dstr := strconv.FormatInt(room.DoctorId, 10)
-		pipe.Do(context.TODO(), "set", "user-now-room-"+ustr, roomId)
-		pipe.Do(context.TODO(), "set", "user-now-room"+dstr, roomId)
+		_, err = pipe.Do(context.TODO(), "set", "user-now-room-"+ustr, roomId).Result()
+		if err != nil {
+			return err
+		}
+		_, err = pipe.Do(context.TODO(), "set", "user-now-room-"+dstr, roomId).Result()
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	return err
+}
+
+func GetRoom(roomId string) *entity.Room {
+	res := &entity.Room{}
+	err := redis.HGet("room-"+roomId, res)
+	if err != nil {
+		if err == redis.RedisEmpty {
+			return nil
+		}
+		panic(err)
+	}
+	return res
 }
 
 func SaveMessage(msg *entity.Message, tx *gorm.DB) error {

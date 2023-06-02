@@ -2,7 +2,6 @@ package main
 
 import (
 	"medicinal_share/main/entity"
-	"medicinal_share/main/entity/report"
 	"medicinal_share/tool/db/mysql"
 )
 
@@ -25,5 +24,7 @@ func main() {
 		entity.Message{},
 		entity.ProjectReserve{},
 		entity.Worker{},
-		report.Report{})
+		entity.Report{},
+		entity.ShareReport{},
+	)
 }

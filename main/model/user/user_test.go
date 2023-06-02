@@ -41,3 +41,7 @@ func TestCreate2(t *testing.T) {
 		return nil
 	})
 }
+
+func TestExist(t *testing.T) {
+	UpdateDoctorStatus(2, Offline)
+}

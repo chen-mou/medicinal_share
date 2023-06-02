@@ -9,9 +9,10 @@ import (
 func Route(app *gin.Engine) {
 	app.Group("/treat").
 		Use(middleware.Verify).
-		POST("/treat", Treat)
+		POST("/treat", Treat).
+		GET("/getRoomInfo", GetRoomInfo)
 }
 
 func Websocket(manager *socket.ConnManager) {
-	manager.Message("/send", Send)
+	manager.Message("/send", Send).Message("/confirm", Confirm)
 }

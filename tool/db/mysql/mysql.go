@@ -26,7 +26,7 @@ type CountPolicy struct {
 
 func init() {
 
-	db = newDb()
+	//db = newDb()
 	//dao.SetDefault(db)
 
 }
@@ -38,7 +38,14 @@ func (cp *CountPolicy) Resolve(pool []gorm.ConnPool) gorm.ConnPool {
 	return con
 }
 
+var once = sync.Once{}
+
 func GetConnect() *gorm.DB {
+	once.Do(func() {
+		if db == nil {
+			db = newDb()
+		}
+	})
 	return db
 }
 

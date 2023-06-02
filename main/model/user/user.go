@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	redis2 "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"medicinal_share/main/entity"
@@ -99,6 +98,9 @@ func CreateData(userId int64, tx *gorm.DB) *entity.UserData {
 	if err != nil {
 		panic(err)
 	}
+	tx.Where(entity.FileData{
+		Id: data.Avatar,
+	}).Joins("File").Take(&data.AvatarFile)
 	return &data
 }
 
@@ -148,16 +150,60 @@ const (
 )
 
 // UpdateDoctorStatus TODO:更新医生当前的状态
-func UpdateDoctorStatus(userId int64, status DoctorStatus) {}
+func UpdateDoctorStatus(doctorId int, status DoctorStatus) {
+	client := elasticsearch.GetClient()
+	id := strconv.Itoa(doctorId)
+	res, err := client.Exists("doctor_tag", id)
+	if err != nil {
+		panic(err)
+	}
+	if res.StatusCode == 404 {
+		doc := GetDoctorById(doctorId)
+		h := &entity.Hospital{}
+		err := mysql.GetConnect().Where("id = ?", doc.HospitalId).Take(h).Error
+		if err != nil {
+			panic(err)
+		}
+		ids := make([]int64, 0)
+		for _, v := range doc.Tags {
+			ids = append(ids, v.TagId)
+		}
+		body := map[string]any{
+			"status":    status,
+			"doctor_id": doctorId,
+			"tags":      ids,
+			"location": map[string]float64{
+				"lat": h.Latitude,
+				"lon": h.Longitude,
+			},
+		}
+		byt, _ := json.Marshal(body)
+		_, err = client.Create("doctor_tag", id, bytes.NewBuffer(byt))
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+	body := map[string]DoctorStatus{
+		"status": status,
+	}
+	byt, _ := json.Marshal(body)
+	_, err = client.Update("doctor_tag", id, bytes.NewBuffer(byt))
+	if err != nil {
+		panic(err)
+	}
+}
 
 // GetBestDoctor 获取最佳匹配的医生
 func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
-	tag := make([]int64, 0)
+	tag := make([]*int64, 0)
 	db := mysql.GetConnect()
-	err := db.Model(&entity.TagRelation{}).
-		Select("relation_id").
+	//m := map[string]interface{}{}
+	err := db.Table("tag_ref").
+		Select("distinct relation_id").
+		Joins("inner join tag_def td on td.id in (?) and td.type = 'Symptom'", tags).
 		Where("relation_type = 'tag'").
-		Joins("Tag", db.Where("Tag.id in (?) and Tag.type = 'Symptom'", tags)).Scan(&tags).Error
+		Scan(&tag).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		panic(err)
 	}
@@ -166,7 +212,7 @@ func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
 		"_source": "doctor_id",
 		"query": map[string]any{"bool": map[string]any{
 			"should": map[string]any{
-				"terms": map[string][]int64{"tags": tag},
+				"terms": map[string][]*int64{"tags": tag},
 			},
 			"filter": map[string]any{
 				"term": map[string]DoctorStatus{
@@ -181,7 +227,7 @@ func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
 						"lat": latit,
 						"lon": long,
 					},
-					"order":         "asc",
+					"order":         "desc",
 					"distance_type": "plane",
 				},
 			},
@@ -195,9 +241,11 @@ func GetBestDoctor(tags []int64, long float64, latit float64) int64 {
 	elasticsearch.Get(&res,
 		elasticsearch.GetClient().Search.WithBody(bytes.NewBuffer(byt)),
 		elasticsearch.GetClient().Search.WithIndex("doctor_tag"),
+		elasticsearch.GetClient().Search.WithFilterPath("hits.hits._source"),
 	)
-	fmt.Println(res)
-	return 0
+	source := res["hits"].(map[string]any)["hits"].([]any)[0].(map[string]any)["_source"].(map[string]any)["doctor_id"].(float64)
+	doc := GetDoctorById(int(source))
+	return doc.UserId
 }
 
 func CreateWorker(tx *gorm.DB, hospitalId, userId int64) {

@@ -11,7 +11,7 @@ type Hospital struct {
 	Background     int64     `json:"background" gorm:"not null;default:1"`
 	BackgroundFile FileData  `json:"background_file" gorm:"foreignKey:Background"`
 	AvatarFile     FileData  `json:"avatar_file" gorm:"foreignKey:Avatar"`
-	Description    string    `json:"description" gorm:"type:tinytext"`
+	Description    string    `json:"description" gorm:"type:text"`
 	Projects       []Project `json:"projects,omitempty" gorm:"foreignKey:HospitalId"`
 }
 

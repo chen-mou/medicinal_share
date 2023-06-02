@@ -36,6 +36,7 @@ func getDoctorInfoByIdFormDB(userId int64) *entity.DoctorInfo {
 		Where("user_id = ?", userId).
 		Joins("Info").
 		Preload("Tags").
+		Preload("Tags.Tag").
 		Preload("Avatar").
 		Take(info).Error
 	if err != nil {
@@ -57,6 +58,22 @@ func GetDoctorInfoById(userId int64) *entity.DoctorInfo {
 	}).(*entity.DoctorInfo)
 }
 
+func GetDoctorById(id int) *entity.DoctorInfo {
+	res := &entity.DoctorInfo{}
+	db := mysql.GetConnect()
+	err := db.Where(&entity.DoctorInfo{Id: id}).
+		Joins("Info").
+		Preload("Tags", db.Where("tag_ref.relation_type = 'area'")).
+		Preload("Tags.Tag").Take(res).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil
+		}
+		panic(err)
+	}
+	return res
+}
+
 func GetInfoByNameAndIdNumber(name, idNumber string) *entity.RealInfo {
 	info := &entity.RealInfo{}
 	err := mysql.GetConnect().Where("name = ? and id_number = ?", name, idNumber).Take(info).Error
@@ -72,7 +89,7 @@ func GetInfoByNameAndIdNumber(name, idNumber string) *entity.RealInfo {
 func GetDoctors(page int) []*entity.DoctorInfo {
 	info := make([]*entity.DoctorInfo, 0)
 	mysql.GetConnect().Model(&entity.DoctorInfo{}).
-		Joins("Info").Preload("Tags").
+		Joins("Info").Preload("TagsId").
 		Limit(20).Offset((page - 1) * 20).Find(&info)
 	return info
 }
